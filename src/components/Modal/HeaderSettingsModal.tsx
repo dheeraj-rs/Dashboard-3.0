@@ -93,13 +93,13 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
 
     switch (newItemType) {
       case "section":
-        handleSectionColorChange(newItemName, "#ffffff");
+        handleSectionColorChange(newItemName, "#f9fafb");
         break;
       case "subsection":
-        handleSubsectionColorChange(newItemName, "#ffffff");
+        handleSubsectionColorChange(newItemName, "#f9fafb");
         break;
       case "mergedItem":
-        handleMergedItemColorChange(newItemName, "#ffffff");
+        handleMergedItemColorChange(newItemName, "#f9fafb");
         break;
       default:
         break;
@@ -126,8 +126,8 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-50 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Table Customization</h2>
 
@@ -146,7 +146,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                   />
                   <input
                     type="color"
-                    value={columnColors[header.type] || "#ffffff"}
+                    value={columnColors[header.type] || "#f9fafb"}
                     onChange={(e) => handleColumnColorChange(header.type, e.target.value)}
                     className="w-6 h-6 rounded-md cursor-pointer"
                   />
@@ -232,7 +232,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                   setNewItemType("section");
                   setShowAddItemAlert(true);
                 }}
-                className="w-full px-2 py-1 text-sm text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+                className="w-full px-2 py-1 text-sm text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
               >
                 Add Section
               </button>
@@ -241,7 +241,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                   setNewItemType("subsection");
                   setShowAddItemAlert(true);
                 }}
-                className="w-full px-2 py-1 text-sm text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+                className="w-full px-2 py-1 text-sm text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
               >
                 Add Subsection
               </button>
@@ -274,7 +274,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                   setNewItemType("mergedItem");
                   setShowAddItemAlert(true);
                 }}
-                className="w-full px-2 py-1 text-sm text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+                className="w-full px-2 py-1 text-sm text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
               >
                 Add Merged Item
               </button>
@@ -291,7 +291,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
             </button>
             <button
               onClick={handleApply}
-              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors text-sm"
+              className="px-4 py-2 text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors text-sm"
             >
               Apply
             </button>
@@ -301,8 +301,8 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
 
       {/* Add Item Alert Box */}
       {showAddItemAlert && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-50 rounded-lg shadow-lg p-6 w-full max-w-sm">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Add {newItemType === "section" ? "Section" : newItemType === "subsection" ? "Subsection" : "Merged Item"}
             </h3>
@@ -323,7 +323,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                 </button>
                 <button
                   onClick={handleAddItem}
-                  className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                  className="px-4 py-2 text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors text-sm"
                 >
                   Add
                 </button>

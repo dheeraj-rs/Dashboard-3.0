@@ -149,7 +149,7 @@ export default function TrackList({
         {filteredTracks?.length > 0 && (
           <div
             ref={scrollContainerRef}
-            className="flex flex-nowrap overflow-x-auto scrollbar-hide py-3 px-4 gap-4"
+            className="flex flex-nowrap overflow-x-auto scrollbar-hide py-3 px-4 gap-4 min-h-[90px]"
           >
             {filteredTracks.map((track, index) => (
               <Draggable key={track.id} draggableId={track.id} index={index}>

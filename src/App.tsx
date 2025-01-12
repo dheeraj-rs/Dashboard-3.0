@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { Track, Section, FlyoverState } from "./types/scheduler";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -8,6 +8,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 const TrackList = lazy(() => import("./components/Track/TrackList"));
 const SectionList = lazy(() => import("./components/Section/SectionList"));
 import FlyoverPanel from "./components/Modal/FlyoverPanel";
+import ParticipantsPage from "./components/Participants/ParticipantsPage";
 
 function App() {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -19,6 +20,12 @@ function App() {
     type: "",
     data: null,
   });
+
+  useEffect(() => {
+    console.log(tracks);
+  }, [tracks]);
+
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
   const navigationItems = [
     { id: "schedule", label: "Schedule", icon: Calendar },
@@ -265,9 +272,39 @@ function App() {
         return "Add Subsection";
       case "edit-section":
         return "Edit Section";
+      case "add-participant":
+        return "Add New Participant";
+      case "edit-participant":
+        return "Edit Participant";
       default:
         return "Details";
     }
+  };
+
+  const handleAddParticipant = (participantData: Partial<Participant>) => {
+    const newParticipant: Participant = {
+      id: crypto.randomUUID(),
+      name: participantData.name || "",
+      role: participantData.role || "",
+      email: participantData.email || "",
+      organization: participantData.organization || "",
+      sessions: participantData.sessions || []
+    };
+    setParticipants(prev => [...prev, newParticipant]);
+  };
+
+  const handleUpdateParticipant = (participantId: string, updates: Partial<Participant>) => {
+    setParticipants(prev =>
+      prev.map(participant =>
+        participant.id === participantId
+          ? { ...participant, ...updates }
+          : participant
+      )
+    );
+  };
+
+  const handleDeleteParticipant = (participantId: string) => {
+    setParticipants(prev => prev.filter(p => p.id !== participantId));
   };
 
   return (
@@ -281,38 +318,47 @@ function App() {
       >
         <ErrorBoundary>
           <Suspense fallback={<div>Loading...</div>}>
-            {activeTab === "schedule" && (
-              <div className="space-y-8">
-                <Droppable droppableId="tracks" type="track">
-                  {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef}>
-                      <TrackList
-                        tracks={tracks}
-                        onSelectTrack={setSelectedTrackId}
-                        selectedTrackId={selectedTrackId}
-                        setFlyoverState={setFlyoverState}
-                      />
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-                {selectedTrack && (
-                  <Droppable droppableId={selectedTrack.id} type="section">
-                    {(provided) => (
-                      <div {...provided.droppableProps} ref={provided.innerRef}>
-                        <SectionList
-                          sections={selectedTrack.sections}
-                          onUpdateSection={handleUpdateSection}
-                          activeTrack={selectedTrack}
-                          setFlyoverState={setFlyoverState}
-                        />
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                )}
-              </div>
-            )}
+          {activeTab === "schedule" && (
+  <div className="space-y-8">
+    <Droppable droppableId="tracks" type="track">
+      {(provided) => (
+        <div {...provided.droppableProps} ref={provided.innerRef}>
+          <TrackList
+            tracks={tracks}
+            onSelectTrack={setSelectedTrackId}
+            selectedTrackId={selectedTrackId}
+            setFlyoverState={setFlyoverState}
+          />
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
+    {selectedTrack && (
+      <Droppable droppableId={selectedTrack.id} type="section">
+        {(provided) => (
+          <div {...provided.droppableProps} ref={provided.innerRef}>
+            <SectionList
+              sections={selectedTrack.sections}
+              onUpdateSection={handleUpdateSection}
+              activeTrack={selectedTrack}
+              setFlyoverState={setFlyoverState}
+            />
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    )}
+  </div>
+)}
+{activeTab === "participants" && (
+  <ParticipantsPage 
+    setFlyoverState={setFlyoverState}
+    participants={participants}
+    onAddParticipant={handleAddParticipant}
+    onUpdateParticipant={handleUpdateParticipant}
+    onDeleteParticipant={handleDeleteParticipant}
+  />
+)}
           </Suspense>
         </ErrorBoundary>
         <FlyoverPanel
@@ -323,6 +369,8 @@ function App() {
           handleAddTrack={handleAddTrack}
           handleUpdateSection={handleUpdateSection}
           handleSubmitSection={handleSubmitSection}
+          handleAddParticipant={handleAddParticipant}
+          handleUpdateParticipant={handleUpdateParticipant}
         />
       </DashboardLayout>
     </DragDropContext>

@@ -69,20 +69,20 @@ export default function DashboardLayout({
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-gradient-to-br from-slate-900/60 to-slate-800/50 backdrop-blur-sm z-40 md:hidden"
           onClick={toggleMobileSidebar}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-white transform transition-all duration-300 ease-in-out 
+        className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/60 transform transition-all duration-300 ease-in-out 
           ${!isSidebarOpen ? "-translate-x-full" : "translate-x-0"}
           ${isMiniSidebar ? "w-20" : "w-72"}
-          border-r border-slate-200 md:translate-x-0`}
+          border-r border-slate-200/70 md:translate-x-0`}
       >
         {/* Sidebar Header */}
-        <div className="h-20 flex items-center gap-5 px-6 relative border-b border-slate-100">
+        <div className="h-20 flex items-center gap-5 px-6 relative border-b border-slate-100/80 bg-gradient-to-r from-slate-50/50 to-white">
         <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-500 to-pink-500" />
 
           <div className="flex items-center gap-4 overflow-hidden">
@@ -105,7 +105,7 @@ export default function DashboardLayout({
           <button
             onClick={toggleFullSidebar}
             className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 items-center justify-center 
-              rounded-full bg-white shadow-md border border-slate-200 hover:bg-slate-50 transition-colors"
+              rounded-full bg-slate-50 shadow-md border border-slate-200 hover:bg-slate-50 transition-colors"
           >
             {!isMiniSidebar ? (
               <ChevronLeft className="h-5 w-5 text-slate-500" />
@@ -127,8 +127,8 @@ export default function DashboardLayout({
                   ${isMiniSidebar ? "justify-center" : "justify-start"}
                   ${
                     activeTab === item.id
-                      ? "bg-violet-50 text-violet-600"
-                      : "text-slate-600 hover:bg-slate-50"
+                      ? "bg-gradient-to-r from-violet-50 to-violet-100/80 text-violet-600"
+                      : "text-slate-600 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100/50"
                   }`}
               >
                 <item.icon
@@ -158,8 +158,8 @@ export default function DashboardLayout({
           {!isMiniSidebar && (
   <div className="absolute bottom-8 left-4 right-4">
     <div
-      className={`p-4 rounded-xl bg-gradient-to-r from-violet-50/80 to-pink-50/80 
-      border border-violet-100/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow`}
+      className={`p-4 rounded-xl bg-gradient-to-br from-violet-50/70 via-white to-pink-50/60 
+      border border-violet-100/40 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow`}
     >
       <div className="flex items-center gap-3">
         {/* User Avatar */}
@@ -241,9 +241,9 @@ export default function DashboardLayout({
         </header>
 
         {/* Main Content Area */}
-        <main className="p-4 lg:p-8">
+        <main className="p-4 lg:p-6">
           {/* Children Content */}
-          <div className="bg-white rounded-xl border border-slate-200 p-3 min-h-[82vh]">
+          <div className="bg-gradient-to-br from-slate-50/50 to-white rounded-xl border border-slate-200 p-3 min-h-[82vh]">
             {children}
           </div>
         </main>

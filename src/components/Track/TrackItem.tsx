@@ -15,7 +15,7 @@ export default function TrackItem({ track, onSelect, onEdit, colorIndex, isFullV
 
   return (
     <div className={`
-      p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border-l-4 ${borderColor}
+      p-3 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow border-l-4 ${borderColor}
       ${isFullView ? 'h-48' : ''}
     `}>
       <div className="flex items-start justify-between h-full">

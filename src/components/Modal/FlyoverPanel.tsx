@@ -2,6 +2,7 @@ import TrackForm from "../Track/TrackForm";
 import SectionForm from "../Section/SectionForm";
 import { X } from "lucide-react";
 import { FlyoverPanelProps } from "../../types/scheduler";
+import ParticipantForm from "../Participants/ParticipantForm";
 
 function FlyoverPanel({
   flyoverState,
@@ -11,6 +12,8 @@ function FlyoverPanel({
   handleAddTrack,
   handleUpdateSection,
   handleSubmitSection,
+  handleAddParticipant,
+  handleUpdateParticipant,
 }: FlyoverPanelProps) {
   return (
     <aside
@@ -74,6 +77,20 @@ function FlyoverPanel({
                 handleSubmitSection(sectionData);
               } else {
                 handleSubmitSection(sectionData);
+              }
+              setFlyoverState({ isOpen: false, type: null, data: null });
+            }}
+          />
+        )}
+
+        {(flyoverState.type === "add-participant" || flyoverState.type === "edit-participant") && (
+          <ParticipantForm
+            initialData={flyoverState.type === "edit-participant" ? flyoverState.data : undefined}
+            onSubmit={(participantData) => {
+              if (flyoverState.type === "edit-participant") {
+                handleUpdateParticipant(flyoverState.data.id, participantData);
+              } else {
+                handleAddParticipant(participantData);
               }
               setFlyoverState({ isOpen: false, type: null, data: null });
             }}

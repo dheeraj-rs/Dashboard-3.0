@@ -16,7 +16,7 @@ export default defineConfig({
       manifest: {
         name: 'Scheduler App',
         short_name: 'Scheduler',
-        theme_color: '#ffffff',
+        theme_color: '#f8fafc',
         icons: [
           {
             src: '/pwa-192x192.png',

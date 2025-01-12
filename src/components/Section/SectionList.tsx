@@ -8,25 +8,23 @@ import {
   Maximize2,
   Minimize2,
   Search,
-  ChevronDown,
   Plus,
   Edit,
   Trash,
-  MoreVertical,
+  Table,
+  TableProperties,
 } from "lucide-react";
 import {
   Section,
-  MergedFields,
   SectionListProps,
   TableHeader,
-  SelectionState,
   SectionRowProps,
+  MergedFields,
 } from "../../types/scheduler";
 import { groupSectionsByRole } from "../../utils/sectionUtils";
 import HeaderSettingsModal from "../Modal/HeaderSettingsModal";
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import { Menu, Transition } from "@headlessui/react";
-import CustomDropdown from "../Modal/CustomDropdown";
+import ColorSelectionModal from "../Modal/ColorSelectionModal";
 
 const sectionLevelColors = {
   0: "bg-blue-50 border-l-4 border-l-blue-500",
@@ -35,6 +33,26 @@ const sectionLevelColors = {
   3: "bg-orange-50 border-l-4 border-l-orange-500",
   4: "bg-pink-50 border-l-4 border-l-pink-500",
 };
+
+const colorOptions = [
+  { name: "Blue", class: "bg-blue-100", hover: "hover:bg-blue-200" },
+  { name: "Green", class: "bg-green-100", hover: "hover:bg-green-200" },
+  { name: "Purple", class: "bg-purple-100", hover: "hover:bg-purple-200" },
+  { name: "Orange", class: "bg-orange-100", hover: "hover:bg-orange-200" },
+  { name: "Pink", class: "bg-pink-100", hover: "hover:bg-pink-200" },
+  { name: "Yellow", class: "bg-yellow-100", hover: "hover:bg-yellow-200" },
+  { name: "Teal", class: "bg-teal-100", hover: "hover:bg-teal-200" },
+  { name: "Indigo", class: "bg-indigo-100", hover: "hover:bg-indigo-200" },
+  { name: "Red", class: "bg-red-100", hover: "hover:bg-red-200" },
+] as const;
+
+type ColorClass = typeof colorOptions[number]["class"];
+
+interface SelectionState {
+  isSelecting: boolean;
+  selectedColumns: { sectionId: string; columnType: keyof MergedFields }[];
+  selectedColor: ColorClass;
+}
 
 function SectionRow({
   section,
@@ -45,21 +63,10 @@ function SectionRow({
   selection,
   onSelect,
   setFlyoverState,
-}: SectionRowProps) {
-  const isColumnSelected = (columnType: keyof MergedFields) => {
-    return selection?.selectedColumns.some(
-      (col) => col.sectionId === section.id && col.columnType === columnType
-    );
-  };
-
-  const handleColumnClick = (
-    sectionId: string,
-    columnType: keyof MergedFields
-  ) => {
-    if (!selection?.isSelecting || !onSelect) return;
-    onSelect(sectionId, columnType);
-  };
-
+}: SectionRowProps & {
+  selection?: SelectionState;
+  onSelect?: (sectionId: string, columnType: keyof MergedFields) => void;
+}) {
   const getLevelColor = (level: number) => {
     return (
       sectionLevelColors[level as keyof typeof sectionLevelColors] ||
@@ -67,9 +74,30 @@ function SectionRow({
     );
   };
 
+  const isColumnSelected = (columnType: keyof MergedFields) => {
+    return selection?.selectedColumns.some(
+      (col) => col.sectionId === section.id && col.columnType === columnType
+    );
+  };
+
+  const handleColumnClick = (columnType: keyof MergedFields) => {
+    if (!selection?.isSelecting || !onSelect) return;
+    onSelect(section.id, columnType);
+  };
+
+  const getColumnClassName = (columnType: keyof MergedFields) => {
+    const baseClasses = "px-4 py-2 border-b border-r text-sm";
+    const selectedClass = isColumnSelected(columnType)
+      ? `${selection?.selectedColor} ring-2 ring-offset-1 ring-indigo-400`
+      : "";
+    const mergedClass = section.mergedFields?.[columnType]
+      ? `${section.mergedFields.color} font-medium`
+      : "";
+    return `${baseClasses} ${selectedClass} ${mergedClass}`;
+  };
+
   const renderActionButtons = (section: Section) => (
-    <div className="flex items-center justify-center gap-2">
-      {/* Add Subsection Button */}
+    <div className="flex items-center justify-center gap-3">
       <button
         onClick={() =>
           setFlyoverState({
@@ -84,54 +112,22 @@ function SectionRow({
         <Plus className="w-4 h-4" />
         <span>Add Sub</span>
       </button>
-  
-      {/* Custom Dropdown Menu */}
-      <CustomDropdown
-        trigger={
-          <div className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100 transition-colors duration-200">
-            <MoreVertical className="w-5 h-5" />
-          </div>
+      <Edit
+        className="w-4 h-4 mr-2"
+        onClick={() =>
+          setFlyoverState({
+            isOpen: true,
+            type: "edit-section",
+            data: section,
+          })
         }
-      >
-        {/* Edit Option */}
-        <button
-          onClick={() =>
-            setFlyoverState({
-              isOpen: true,
-              type: "edit-section",
-              data: section,
-            })
-          }
-          className="w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-md transition-colors duration-200 flex items-center"
-        >
-          <Edit className="w-4 h-4 mr-2" />
-          Edit Section
-        </button>
-  
-        {/* Delete Option */}
-        <button
-          onClick={() => onUpdateSection(section.id, { deleted: true })}
-          className="w-full px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-md transition-colors duration-200 flex items-center"
-        >
-          <Trash className="w-4 h-4 mr-2" />
-          Delete Section
-        </button>
-      </CustomDropdown>
+      />
+      <Trash
+        className="w-4 h-4 mr-2"
+        onClick={() => onUpdateSection(section.id, { deleted: true })}
+      />
     </div>
   );
-  const getColumnClassName = (columnType: keyof MergedFields) => {
-    const baseClasses = "px-4 py-2 border-b border-r text-sm cursor-pointer";
-    const hoverClass = selection?.isSelecting ? "hover:bg-gray-100" : "";
-    const selectedClass = isColumnSelected(columnType)
-      ? selection?.selectedColor
-      : "";
-    const mergedClass =
-      section.mergedFields?.[columnType] && section.mergedFields?.color
-        ? section.mergedFields.color
-        : "";
-
-    return `${baseClasses} ${hoverClass} ${selectedClass} ${mergedClass}`;
-  };
 
   return (
     <Draggable key={section.id} draggableId={section.id} index={level}>
@@ -145,7 +141,7 @@ function SectionRow({
           >
             <td
               className={getColumnClassName("timeSlot")}
-              onClick={() => handleColumnClick(section.id, "timeSlot")}
+              onClick={() => handleColumnClick("timeSlot")}
             >
               <div
                 className="flex items-center gap-1"
@@ -161,7 +157,7 @@ function SectionRow({
             </td>
             <td
               className={getColumnClassName("name")}
-              onClick={() => handleColumnClick(section.id, "name")}
+              onClick={() => handleColumnClick("name")}
             >
               {section.name}
             </td>
@@ -169,13 +165,13 @@ function SectionRow({
               <>
                 <td
                   className={getColumnClassName("speaker")}
-                  onClick={() => handleColumnClick(section.id, "speaker")}
+                  onClick={() => handleColumnClick("speaker")}
                 >
                   {section.speaker}
                 </td>
                 <td
                   className={getColumnClassName("role")}
-                  onClick={() => handleColumnClick(section.id, "role")}
+                  onClick={() => handleColumnClick("role")}
                 >
                   {section.role}
                 </td>
@@ -187,7 +183,7 @@ function SectionRow({
           </tr>
 
           {/* Render Subsections */}
-          {section.subsections?.map((subsection, index) => (
+          {section.subsections?.map((subsection) => (
             <SectionRow
               key={subsection.id}
               section={subsection}
@@ -216,12 +212,6 @@ export default function SectionList({
 }: SectionListProps) {
   const groupedSections = groupSectionsByRole(sections);
   const [isFullView, setIsFullView] = useState(false);
-  const [selection, setSelection] = useState<SelectionState>({
-    isSelecting: false,
-    selectedColumns: [],
-    selectedColor: "bg-blue-100",
-  });
-  const [showColorModal, setShowColorModal] = useState(false);
   const [showHeaderSettings, setShowHeaderSettings] = useState(false);
   const [headers, setHeaders] = useState<TableHeader[]>([
     { id: "1", label: "Time", type: "time", isVisible: true },
@@ -231,29 +221,23 @@ export default function SectionList({
     { id: "5", label: "Actions", type: "actions", isVisible: true },
   ]);
   const [tableStyles, setTableStyles] = useState({
-    headerColor: "#f3f4f6", // gray-50
-    textColor: "#374151", // gray-700
-    borderColor: "#e5e7eb", // gray-200
+    headerColor: "linear-gradient(to right, #f8fafc, #f1f5f9)",
+    textColor: "#374151",
+    borderColor: "#e5e7eb",
   });
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Filter sections based on search query
-  const filteredSections = useMemo(() => {
-    if (!searchQuery) return groupedSections;
-    return groupedSections.map((group) => ({
-      ...group,
-      sections: group.sections.filter((section) =>
-        section.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
-    }));
-  }, [groupedSections, searchQuery]);
+  const [selection, setSelection] = useState<SelectionState>({
+    isSelecting: false,
+    selectedColumns: [],
+    selectedColor: colorOptions[0].class,
+  });
+  const [showColorModal, setShowColorModal] = useState(false);
 
   const handleSelect = (sectionId: string, columnType: keyof MergedFields) => {
     setSelection((prev) => {
       const existingSelection = prev.selectedColumns.find(
         (col) => col.sectionId === sectionId && col.columnType === columnType
       );
-
       return {
         ...prev,
         selectedColumns: existingSelection
@@ -267,36 +251,41 @@ export default function SectionList({
   };
 
   const handleApplySelection = (color: string, mergeName: string) => {
-    const allSelectedSectionIds = [
-      ...new Set(selection.selectedColumns.map((col) => col.sectionId)),
-    ];
-    allSelectedSectionIds.forEach((sectionId) => {
-      const selectedColumns = selection.selectedColumns
-        .filter((col) => col.sectionId === sectionId)
-        .map((col) => col.columnType);
+    if (!mergeName.trim()) {
+      alert("Please enter a merge name");
+      return;
+    }
 
-      const mergedFields: Partial<MergedFields> = {
-        speaker: false,
-        role: false,
-        timeSlot: false,
-      };
-      selectedColumns.forEach((columnType) => {
-        (mergedFields[columnType] as boolean) = true;
-      });
-      mergedFields.color = color;
-      mergedFields.name = mergeName;
+    const mergeId = `merge-${Date.now()}`;
 
+    selection.selectedColumns.forEach(({ sectionId, columnType }) => {
       onUpdateSection(sectionId, {
-        mergedFields,
+        mergedFields: {
+          [columnType]: true,
+          color,
+          mergeId,
+          name: mergeName,
+        },
       });
     });
 
     setSelection({
       isSelecting: false,
       selectedColumns: [],
-      selectedColor: "bg-blue-100",
+      selectedColor: colorOptions[0].class,
     });
+    setShowColorModal(false);
   };
+
+  const filteredSections = useMemo(() => {
+    if (!searchQuery) return groupedSections;
+    return groupedSections.map((group) => ({
+      ...group,
+      sections: group.sections.filter((section) =>
+        section.name.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    }));
+  }, [groupedSections, searchQuery]);
 
   const tableHeaders = useMemo(
     () =>
@@ -318,90 +307,70 @@ export default function SectionList({
     [headers, tableStyles]
   );
 
-  // Format date and time for display
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <Droppable droppableId={activeTrack?.id || "sections"} type="section">
       {(provided) => (
         <div
           ref={provided.innerRef}
           {...provided.droppableProps}
-          className={`
-            transition-all duration-300 ease-in-outm
-            ${
-              isFullView
-                ? "fixed inset-0 bg-white z-50 ml-64 pt-16"
-                : "relative"
-            }
-          `}
+          className={`transition-all duration-300 ease-in-out ${
+            isFullView ? "fixed inset-0 z-50 bg-white" : "relative"
+          }`}
         >
           {/* Sections Header */}
-          <div
-            className={`
-              ${isFullView ? "sticky top-0 z-10 bg-white" : ""}
-            `}
-          >
+          <div className={`${isFullView ? "sticky top-0 z-10 bg-white p-4 shadow-sm" : ""}`}>
             {activeTrack && (
-              <div className="flex flex-col md:flex-row flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl px-6 py-4 shadow-sm border border-gray-100">
-                {/* Track Info Section */}
+              <div className="flex flex-col md:flex-row flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-violet-50/40 rounded-xl px-6 py-4 shadow-sm border border-gray-100">
                 <div className="flex flex-col md:flex-row items-center gap-4">
-                  {/* Current Track Info */}
-                  <div className="flex flex-col gap-1">
-                    <div className="text-lg font-bold text-blue-700 flex-shrink-0">
-                      Current Track :{" "}
-                      <span className="text-xl font-light text-blue-800">
-                        {activeTrack.name}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {formatDateTime(activeTrack.startDate)} -{" "}
-                      {formatDateTime(activeTrack.endDate)}
-                    </div>
+                  <div className="text-lg font-bold text-blue-700 flex-shrink-0">
+                    Current Track :{" "}
+                    <span className="text-xl font-light text-blue-800">
+                      {activeTrack.name}
+                    </span>
                   </div>
                 </div>
-
-                {/* Buttons Section */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Full View / Compact View Button */}
-                  <button
-                    onClick={() => setIsFullView(!isFullView)}
-                    className="flex items-center gap-1.5 px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    {isFullView ? (
-                      <Minimize2 className="w-5 h-5" />
-                    ) : (
-                      <Maximize2 className="w-5 h-5" />
-                    )}
-                    <span className="text-sm font-medium">
-                      {isFullView ? "Compact View" : "Full View"}
-                    </span>
-                  </button>
-
-                  {/* Settings Button */}
-                  <button
+                <div className="flex flex-wrap items-center gap-5">
+                  {isFullView ? (
+                    <Minimize2
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() => setIsFullView(!isFullView)}
+                    />
+                  ) : (
+                    <Maximize2
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() => setIsFullView(!isFullView)}
+                    />
+                  )}
+                  <Settings
+                    className="w-5 h-5 cursor-pointer"
                     onClick={() => setShowHeaderSettings(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <Settings className="w-5 h-5" />
-                    <span className="text-sm font-medium">Settings</span>
-                  </button>
-
-                  {/* Apply Selection or Add Section Button */}
+                  />
+                  {selection.isSelecting ? (
+                    <TableProperties
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() =>
+                        setSelection((prev) => ({
+                          ...prev,
+                          isSelecting: !prev.isSelecting,
+                        }))
+                      }
+                    />
+                  ) : (
+                    <Table
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() =>
+                        setSelection((prev) => ({
+                          ...prev,
+                          isSelecting: !prev.isSelecting,
+                        }))
+                      }
+                    />
+                  )}
                   {selection.isSelecting ? (
                     <>
                       <button
                         onClick={() => setShowColorModal(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors duration-200"
+                        className="flex items-center gap-1.5 px-4 py-2 text-slate-50 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors duration-200"
                       >
                         <Check className="w-5 h-5" />
                         <span className="text-sm font-medium">
@@ -413,10 +382,10 @@ export default function SectionList({
                           setSelection({
                             isSelecting: false,
                             selectedColumns: [],
-                            selectedColor: "bg-blue-100",
+                            selectedColor: colorOptions[0].class,
                           })
                         }
-                        className="flex items-center gap-1.5 px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors duration-200"
+                        className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-red-500 rounded-lg hover:bg-red-600 transition-colors duration-200"
                       >
                         <X className="w-5 h-5" />
                         <span className="text-sm font-medium">Cancel</span>
@@ -431,7 +400,7 @@ export default function SectionList({
                           data: null,
                         })
                       }
-                      className="flex items-center gap-1.5 px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                      className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
                     >
                       <PlusCircle className="w-5 h-5" />
                       <span className="text-sm font-medium">Add Section</span>
@@ -443,7 +412,7 @@ export default function SectionList({
           </div>
 
           {/* Search Bar */}
-          <div className="mt-4">
+          <div className="mt-4 px-4">
             <div className="relative">
               <input
                 type="text"
@@ -452,9 +421,7 @@ export default function SectionList({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {/* Search Icon */}
               <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
-              {/* Clear 'X' Button */}
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
@@ -467,15 +434,13 @@ export default function SectionList({
           </div>
 
           <div
-            className={`
-              ${
-                isFullView
-                  ? "px-6 py-4 h-[calc(100vh-8rem)] overflow-y-auto"
-                  : "mt-4  h-full"
-              }
-            `}
+            className={`${
+              isFullView
+                ? "px-4 py-4 h-[calc(100vh-8rem)] overflow-y-auto"
+                : "mt-4 h-full"
+            }`}
           >
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow overflow-hidden">
               <div className="overflow-x-auto h-full">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>
@@ -489,13 +454,6 @@ export default function SectionList({
                             key={section.id}
                             section={section}
                             showSpeakerRole={sectionIndex === 0}
-                            speaker={
-                              typeof section.speaker === "string"
-                                ? section.speaker
-                                : undefined
-                            }
-                            role={section.role}
-                            rowSpan={group.sections.length}
                             onAddSubsection={onAddSubsection}
                             onUpdateSection={onUpdateSection}
                             selection={selection}
@@ -526,6 +484,15 @@ export default function SectionList({
                   borderColor: styles.borderColor,
                 });
               }}
+            />
+          )}
+
+          {/* Color Selection Modal */}
+          {showColorModal && (
+            <ColorSelectionModal
+              isOpen={showColorModal}
+              onClose={() => setShowColorModal(false)}
+              onApply={handleApplySelection}
             />
           )}
         </div>

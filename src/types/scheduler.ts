@@ -9,6 +9,7 @@ export interface MergedFields {
   timeSlot: boolean;
   color?: string;
   name?: string;
+  mergeId?: string;
 }
 
 export interface Section {
@@ -159,9 +160,26 @@ export interface FlyoverPanelProps {
   handleAddTrack: (trackData: any) => void;
   handleUpdateSection: (id: string, sectionData: any) => void;
   handleSubmitSection: (sectionData: any) => void;
+  handleAddParticipant: (participantData: Partial<Participant>) => void;
+  handleUpdateParticipant: (id: string, updates: Partial<Participant>) => void;
 }
 
 
 
 
 export type Tracks = Track[];
+
+export interface Participant {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  organization: string;
+  sessions: string[];
+}
+
+export interface ParticipantsPageProps {
+  setFlyoverState: (state: FlyoverState) => void;
+  participants: Participant[];
+  setParticipants: React.Dispatch<React.SetStateAction<Participant[]>>;
+}
