@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Section, SectionFormProps } from '../../types/scheduler';
 
+type SectionField = keyof Omit<Section, 'id' | 'subsections' | 'deleted'>;
+
 export default function SectionForm({ onSubmit, initialData, isSubsection }: SectionFormProps) {
   const [formData, setFormData] = useState<Partial<Section>>({
     name: initialData?.name || '',
@@ -11,22 +13,51 @@ export default function SectionForm({ onSubmit, initialData, isSubsection }: Sec
       end: '10:00'
     },
     mergedFields: initialData?.mergedFields || {
-      speaker: false,
-      role: false,
-      timeSlot: false
+      speaker: {
+        isMerged: false,
+        color: '',
+        mergeId: '',
+        mergeName: '',
+        value: null
+      },
+      role: {
+        isMerged: false,
+        color: '',
+        mergeId: '',
+        mergeName: '',
+        value: null
+      },
+      timeSlot: {
+        isMerged: false,
+        color: '',
+        mergeId: '',
+        mergeName: '',
+        value: null
+      }
     }
   });
 
   const timeSlot = formData.timeSlot!;
 
-  const handleChange = (field: keyof Section, value: Section[keyof Section]) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (field: SectionField, value: any) => {
+    if (field === 'speaker') {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value as string
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!formData.mergedFields?.timeSlot) {
+    const mergedFields = formData.mergedFields;
+    if (!mergedFields?.timeSlot?.isMerged) {
       const startTime = new Date(`2000-01-01T${timeSlot.start}`);
       const endTime = new Date(`2000-01-01T${timeSlot.end}`);
       
@@ -63,7 +94,7 @@ export default function SectionForm({ onSubmit, initialData, isSubsection }: Sec
           <input
             type="text"
             id="speaker"
-            value={formData.speaker}
+            value={formData.speaker as string}
             onChange={(e) => handleChange('speaker', e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           />

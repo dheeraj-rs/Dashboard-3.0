@@ -1,7 +1,7 @@
 import TrackForm from "../Track/TrackForm";
 import SectionForm from "../Section/SectionForm";
 import { X } from "lucide-react";
-import { FlyoverPanelProps } from "../../types/scheduler";
+import { FlyoverPanelProps } from '../../types/scheduler';
 import ParticipantForm from "../Participants/ParticipantForm";
 
 function FlyoverPanel({
@@ -17,11 +17,12 @@ function FlyoverPanel({
 }: FlyoverPanelProps) {
   return (
     <aside
-      className={`fixed inset-y-0 right-0 w-96 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
-        flyoverState.isOpen ? "translate-x-0" : "translate-x-full"
-      } z-50`}
+      className={`
+        fixed inset-y-0 right-0 w-full max-w-xl bg-white shadow-2xl 
+        transform transition-transform duration-300 ease-in-out z-[90]
+        ${flyoverState.isOpen ? 'translate-x-0' : 'translate-x-full'}
+      `}
     >
-      {/* Header Section */}
       <div className="h-16 flex items-center justify-between px-6 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
         <h2 className="text-xl font-semibold text-gray-900">
           {getFlyoverTitle(flyoverState.type)}

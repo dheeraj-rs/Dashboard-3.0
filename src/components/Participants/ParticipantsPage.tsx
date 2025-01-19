@@ -1,21 +1,10 @@
 import { useState } from "react";
 import { Plus, Search, X } from "lucide-react";
-import { Participant } from "../../types/scheduler";
-import ParticipantForm from "./ParticipantForm";
-
-interface ParticipantsPageProps {
-  setFlyoverState: (state: FlyoverState) => void;
-  participants: Participant[];
-  onAddParticipant: (participantData: Partial<Participant>) => void;
-  onUpdateParticipant: (participantId: string, updates: Partial<Participant>) => void;
-  onDeleteParticipant: (participantId: string) => void;
-}
+import { ParticipantsPageProps } from '../../types/scheduler';
 
 export default function ParticipantsPage({ 
   setFlyoverState, 
   participants,
-  onAddParticipant,
-  onUpdateParticipant,
   onDeleteParticipant
 }: ParticipantsPageProps) {
   const [searchQuery, setSearchQuery] = useState("");

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { PlusCircle, Users, Clock, Search, Layers, Settings, X } from "lucide-react";
-import { Section, Track, TrackListProps } from "../../types/scheduler";
+import { Section, Track, TrackListProps } from '../../types/scheduler';
 import { Draggable } from "react-beautiful-dnd";
 
 export default function TrackList({

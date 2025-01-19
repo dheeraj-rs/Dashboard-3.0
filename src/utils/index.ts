@@ -1,10 +1,4 @@
-import { Section } from '../types/scheduler';
-
-interface SectionGroup {
-  speaker: string;
-  role: string;
-  sections: Section[];
-}
+import { Section, SectionGroup } from '../types/scheduler';
 
 export function groupSectionsByRole(sections: Section[]): SectionGroup[] {
   const groups: SectionGroup[] = [];

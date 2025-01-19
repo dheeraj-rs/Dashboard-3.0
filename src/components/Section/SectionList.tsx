@@ -1,18 +1,17 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   PlusCircle,
-  ChevronRight,
   Check,
   X,
   Settings,
-  Maximize2,
-  Minimize2,
   Search,
   Plus,
   Edit,
   Trash,
   Table,
   TableProperties,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import {
   Section,
@@ -21,8 +20,11 @@ import {
   SectionRowProps,
   MergedFields,
   TimeSlot,
-} from "../../types/scheduler";
-import { groupSectionsByRole } from "../../utils/sectionUtils";
+  SectionWithLevel,
+  SelectionState,
+  MergedCell,
+} from '../../types/scheduler';
+import { groupSectionsByRole } from "../../utils";
 import HeaderSettingsModal from "../Modal/HeaderSettingsModal";
 import ColorSelectionModal from "../Modal/ColorSelectionModal";
 
@@ -46,36 +48,8 @@ const colorOptions = [
   { name: "Red", class: "bg-red-100", hover: "hover:bg-red-200" },
 ] as const;
 
-type ColorClass = typeof colorOptions[number]["class"];
-
-interface MergedCell {
-  id: string;
-  sectionIds: string[];
-  color: string;
-  mergeName: string;
-  columnType: keyof MergedFields;
-  value: any;
-}
-
-interface CellSelection {
-  cellId: string;
-  sectionId: string;
-  columnType: keyof MergedFields;
-  originalValue: any;
-  level: number;
-  mergeId?: string;
-}
-
-interface SelectionState {
-  isSelecting: boolean;
-  selectedCells: CellSelection[];
-  selectedColor: ColorClass;
-  mergeName: string;
-  mergedCellsHistory: MergedCell[];
-}
-
-const findAllSections = (sections: Section[]): Section[] => {
-  let allSections: Section[] = [];
+const findAllSections = (sections: Section[]): SectionWithLevel[] => {
+  let allSections: SectionWithLevel[] = [];
 
   const traverse = (section: Section, level = 0) => {
     allSections.push({ ...section, level });
@@ -91,6 +65,10 @@ const findAllSections = (sections: Section[]): Section[] => {
   return allSections;
 };
 
+const getSectionValue = (section: SectionWithLevel, key: keyof MergedFields) => {
+  return section[key as keyof Section];
+};
+
 const SectionRow = ({
   section,
   level = 0,
@@ -104,6 +82,7 @@ const SectionRow = ({
   selection?: SelectionState;
   onSelect?: (cellId: string, sectionId: string, columnType: keyof MergedFields) => void;
 }) => {
+  
   const getLevelColor = (level: number) => {
     return (
       sectionLevelColors[level as keyof typeof sectionLevelColors] ||
@@ -188,7 +167,7 @@ const SectionRow = ({
     if (columnType === "timeSlot") {
       content = renderTimeSlot(section.timeSlot, level);
     } else {
-      content = mergedCell ? mergedCell.value : section[columnType];
+      content = mergedCell ? mergedCell.value : getSectionValue(section, columnType as keyof MergedFields);
     }
 
     return (
@@ -315,7 +294,6 @@ export default function SectionList({
   activeTrack,
   setFlyoverState,
 }: SectionListProps) {
-  const [isFullView, setIsFullView] = useState(false);
   const [showHeaderSettings, setShowHeaderSettings] = useState(false);
   const [headers, setHeaders] = useState<TableHeader[]>([
     { id: "1", label: "Time", type: "time", isVisible: true },
@@ -336,12 +314,33 @@ export default function SectionList({
     selectedColor: colorOptions[0].class,
     mergeName: "",
     mergedCellsHistory: [],
+    selectedColumns: [],
   });
   const [showColorModal, setShowColorModal] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
-  const handleSelect = (cellId: string, sectionId: string, columnType: keyof MergedFields) => {
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullScreen) {
+        setIsFullScreen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isFullScreen]);
+
+  const handleSelect = (
+    cellIdOrSectionId: string,
+    sectionIdOrColumnType: string | number,
+    columnType?: keyof MergedFields
+  ) => {
+    const sectionId = columnType ? sectionIdOrColumnType as string : cellIdOrSectionId;
+    const actualColumnType = (columnType || sectionIdOrColumnType) as keyof MergedFields;
+    const cellId = columnType ? cellIdOrSectionId : `${sectionId}-${actualColumnType}`;
+
     const allSections = findAllSections(sections);
-    const targetSection = allSections.find((s) => s.id === sectionId);
+    const targetSection = allSections.find((s) => s.id === sectionId) as SectionWithLevel;
     if (!targetSection) return;
 
     setSelection((prev) => {
@@ -351,15 +350,15 @@ export default function SectionList({
 
       // Check if cell is already part of a merged group
       const existingMergedCell = prev.mergedCellsHistory.find(
-        cell => cell.sectionIds.includes(sectionId) && cell.columnType === columnType
+        cell => cell.sectionIds.includes(sectionId) && cell.columnType === actualColumnType
       );
 
       if (existingMergedCell) {
         // If selecting a merged cell, select all cells in the merge group
         const mergedGroupCells = existingMergedCell.sectionIds.map(id => ({
-          cellId: `${id}-${columnType}`,
+          cellId: `${id}-${actualColumnType}`,
           sectionId: id,
-          columnType,
+          columnType: actualColumnType,
           originalValue: existingMergedCell.value,
           level: targetSection.level || 0,
           mergeId: existingMergedCell.id,
@@ -374,7 +373,7 @@ export default function SectionList({
 
       if (prev.selectedCells.length > 0) {
         const firstColumnType = prev.selectedCells[0].columnType;
-        if (columnType !== firstColumnType) {
+        if (actualColumnType !== firstColumnType) {
           alert("You can only merge cells of the same type");
           return prev;
         }
@@ -385,8 +384,8 @@ export default function SectionList({
         newSelectedCells.push({
           cellId,
           sectionId,
-          columnType,
-          originalValue: targetSection[columnType],
+          columnType: actualColumnType,
+          originalValue: getSectionValue(targetSection, actualColumnType),
           level: targetSection.level || 0,
         });
       } else {
@@ -402,6 +401,7 @@ export default function SectionList({
       };
     });
   };
+
   const handleApplySelection = (color: string, mergeName: string) => {
     if (!mergeName.trim()) {
       alert("Please enter a merge name");
@@ -449,6 +449,7 @@ export default function SectionList({
       selectedColor: colorOptions[0].class,
       mergeName: "",
       mergedCellsHistory: [...prev.mergedCellsHistory, newMergedCell],
+      selectedColumns: [],
     }));
 
     setShowColorModal(false);
@@ -515,6 +516,7 @@ export default function SectionList({
                 selectedColor: colorOptions[0].class,
                 mergeName: "",
                 mergedCellsHistory: selection.mergedCellsHistory,
+                selectedColumns: [],
               })
             }
             className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md text-sm hover:bg-gray-300"
@@ -526,46 +528,141 @@ export default function SectionList({
     );
   };
 
-  const FullScreenLayout = () => (
-    <>
-      {/* Full Screen Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b">
-        <h2 className="text-xl font-semibold text-slate-800">
-          {activeTrack?.name || 'Section List'}
-        </h2>
-        <button
-          onClick={() => setIsFullView(false)}
-          className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-red-500 rounded-lg hover:bg-red-600 transition-colors duration-200"
-        >
-          <Minimize2 className="w-5 h-5" />
-          <span className="text-sm font-medium">Exit Full Screen</span>
-        </button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="px-6 py-4 border-b">
-        <div className="relative max-w-2xl">
-          <input
-            type="text"
-            placeholder="Search sections..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-10 top-2.5 text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-5 w-5" />
-            </button>
+  return (
+    <div 
+      className={`
+        bg-white overflow-hidden transition-all duration-300
+        ${isFullScreen ? 'fixed inset-0 z-[80] w-screen h-screen' : 'relative w-full'}
+      `}
+    >
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-white border-b">
+        <div className="p-4">
+          {activeTrack && (
+            <div className="flex flex-col md:flex-row flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-violet-50/40 rounded-xl px-6 py-4 shadow-sm border border-gray-100">
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="text-lg font-bold text-blue-700 flex-shrink-0">
+                  Current Track:{" "}
+                  <span className="text-xl font-light text-blue-800">
+                    {activeTrack.name}
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-5">
+              
+                <button
+                  onClick={() => setIsFullScreen(prev => !prev)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                >
+                  {isFullScreen ? (
+                    <>
+                      <Minimize2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">Exit Full Screen</span>
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">Full Screen</span>
+                    </>
+                  )}
+                </button>
+             
+                {selection.isSelecting ? (
+                  <TableProperties
+                    className="w-5 h-5 cursor-pointer"
+                    onClick={() =>
+                      setSelection((prev) => ({
+                        ...prev,
+                        isSelecting: !prev.isSelecting,
+                      }))
+                    }
+                  />
+                ) : (
+                  <Table
+                    className="w-5 h-5 cursor-pointer"
+                    onClick={() =>
+                      setSelection((prev) => ({
+                        ...prev,
+                        isSelecting: !prev.isSelecting,
+                      }))
+                    }
+                  />
+                )}
+                   <Settings
+                  className="w-5 h-5 cursor-pointer"
+                  onClick={() => setShowHeaderSettings(true)}
+                />
+                {selection.isSelecting ? (
+                  <>
+                    <button
+                      onClick={() => setShowColorModal(true)}
+                      className="flex items-center gap-1.5 px-4 py-2 text-slate-50 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors duration-200"
+                    >
+                      <Check className="w-5 h-5" />
+                      <span className="text-sm font-medium">Apply Selection</span>
+                    </button>
+                    <button
+                      onClick={() =>
+                        setSelection({
+                          isSelecting: false,
+                          selectedCells: [],
+                          selectedColor: colorOptions[0].class,
+                          mergeName: "",
+                          mergedCellsHistory: selection.mergedCellsHistory,
+                          selectedColumns: [],
+                        })
+                      }
+                      className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-red-500 rounded-lg hover:bg-red-600 transition-colors duration-200"
+                    >
+                      <X className="w-5 h-5" />
+                      <span className="text-sm font-medium">Cancel</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() =>
+                      setFlyoverState({
+                        isOpen: true,
+                        type: "add-section",
+                        data: null,
+                      })
+                    }
+                    className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                  >
+                    <PlusCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium">Add Section</span>
+                  </button>
+                )}
+              </div>
+            </div>
           )}
+        </div>
+
+        {/* Search Bar */}
+        <div className="px-4 py-3 bg-gray-50/80 backdrop-blur-sm">
+          <div className="mx-auto relative flex items-center justify-between gap-4">
+            <input
+              type="text"
+              placeholder="Search sections..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-10 top-2.5 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="flex-1 overflow-auto px-6 py-4">
+      {/* Main Content */}
+      <div className="p-4">
         <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -594,182 +691,6 @@ export default function SectionList({
           </div>
         </div>
       </div>
-    </>
-  );
-
-  useEffect(() => {
-    const handleFullScreen = async () => {
-      if (isFullView) {
-        try {
-          if (document.documentElement.requestFullscreen) {
-            await document.documentElement.requestFullscreen();
-          }
-        } catch (err) {
-          console.error('Failed to enter full screen:', err);
-        }
-      } else {
-        if (document.fullscreenElement && document.exitFullscreen) {
-          await document.exitFullscreen();
-        }
-      }
-    };
-
-    handleFullScreen();
-
-    return () => {
-      if (document.fullscreenElement && document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    };
-  }, [isFullView]);
-
-  return (
-    <div className="relative">
-      {isFullView ? (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col overflow-hidden">
-          <FullScreenLayout />
-        </div>
-      ) : (
-        <>
-          {/* Regular view content */}
-          <div className="sticky top-0 z-10 bg-white p-4 shadow-sm">
-            {activeTrack && (
-              <div className="flex flex-col md:flex-row flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-violet-50/40 rounded-xl px-6 py-4 shadow-sm border border-gray-100">
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                  <div className="text-lg font-bold text-blue-700 flex-shrink-0">
-                    Current Track:{" "}
-                    <span className="text-xl font-light text-blue-800">
-                      {activeTrack.name}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-5">
-                  <Settings
-                    className="w-5 h-5 cursor-pointer"
-                    onClick={() => setShowHeaderSettings(true)}
-                  />
-                  {selection.isSelecting ? (
-                    <TableProperties
-                      className="w-5 h-5 cursor-pointer"
-                      onClick={() =>
-                        setSelection((prev) => ({
-                          ...prev,
-                          isSelecting: !prev.isSelecting,
-                        }))
-                      }
-                    />
-                  ) : (
-                    <Table
-                      className="w-5 h-5 cursor-pointer"
-                      onClick={() =>
-                        setSelection((prev) => ({
-                          ...prev,
-                          isSelecting: !prev.isSelecting,
-                        }))
-                      }
-                    />
-                  )}
-                  {selection.isSelecting ? (
-                    <>
-                      <button
-                        onClick={() => setShowColorModal(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 text-slate-50 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors duration-200"
-                      >
-                        <Check className="w-5 h-5" />
-                        <span className="text-sm font-medium">
-                          Apply Selection
-                        </span>
-                      </button>
-                      <button
-                        onClick={() =>
-                          setSelection({
-                            isSelecting: false,
-                            selectedCells: [],
-                            selectedColor: colorOptions[0].class,
-                            mergeName: "",
-                            mergedCellsHistory: selection.mergedCellsHistory,
-                          })
-                        }
-                        className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-red-500 rounded-lg hover:bg-red-600 transition-colors duration-200"
-                      >
-                        <X className="w-5 h-5" />
-                        <span className="text-sm font-medium">Cancel</span>
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() =>
-                        setFlyoverState({
-                          isOpen: true,
-                          type: "add-section",
-                          data: null,
-                        })
-                      }
-                      className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
-                    >
-                      <PlusCircle className="w-5 h-5" />
-                      <span className="text-sm font-medium">Add Section</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Search Bar */}
-          <div className="mt-4 px-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search sections..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-10 top-2.5 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              )}
-            </div>
-          </div>
-          
-          {/* Main Content Table */}
-          <div className="mt-4 h-full">
-            <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>{tableHeaders}</tr>
-                  </thead>
-                  <tbody>
-                    {filteredSections.map((group, groupIndex) => (
-                      <React.Fragment key={groupIndex}>
-                        {group.sections.map((section) => (
-                          <SectionRow
-                            key={section.id}
-                            section={section}
-                            showSpeakerRole={headers.find((h) => h.type === "speaker")?.isVisible}
-                            onAddSubsection={onAddSubsection}
-                            onUpdateSection={onUpdateSection}
-                            selection={selection}
-                            onSelect={handleSelect}
-                            setFlyoverState={setFlyoverState}
-                          />
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
 
       {/* Modals */}
       {showHeaderSettings && (

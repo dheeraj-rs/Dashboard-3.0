@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Menu,
   Bell,
@@ -10,18 +10,7 @@ import {
   X,
 } from "lucide-react";
 import debounce from 'lodash/debounce';
-
-interface DashboardLayoutProps {
-  children: ReactNode;
-  navigationItems: Array<{
-    id: string;
-    label: string;
-    icon: any;
-  }>;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  onSearch?: (query: string) => void;
-}
+import { DashboardLayoutProps } from '../types/scheduler';
 
 export default function DashboardLayout({
   children,
@@ -83,12 +72,6 @@ export default function DashboardLayout({
     const query = e.target.value;
     setSearchQuery(query);
     debouncedSearch(query);
-  };
-
-  const handleSearch = (query: string) => {
-    // Implement your search logic here
-    console.log('Searching for:', query);
-    // You can filter your data, make API calls, etc.
   };
 
   return (

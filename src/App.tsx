@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, useEffect } from "react";
-import { DragDropContext, Droppable } from "react-beautiful-dnd";
-import { Track, Section, FlyoverState } from "./types/scheduler";
+import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
+import { Track, Section, FlyoverState, Participant } from './types/scheduler';
 import ErrorBoundary from "./components/ErrorBoundary";
 import { Calendar, Users, Settings, Layout } from "lucide-react";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -59,10 +59,28 @@ function App() {
           speaker: sectionData.speaker || "",
           role: sectionData.role || "",
           subsections: [],
-          mergedFields: {
-            speaker: false,
-            role: false,
-            timeSlot: false,
+          mergedFields: sectionData.mergedFields || {
+            speaker: {
+              isMerged: false,
+              color: '',
+              mergeId: '',
+              mergeName: '',
+              value: null
+            },
+            role: {
+              isMerged: false,
+              color: '',
+              mergeId: '',
+              mergeName: '',
+              value: null
+            },
+            timeSlot: {
+              isMerged: false,
+              color: '',
+              mergeId: '',
+              mergeName: '',
+              value: null
+            }
           },
         };
 
@@ -91,9 +109,27 @@ function App() {
         : sectionData.role || "",
       subsections: [],
       mergedFields: sectionData.mergedFields || {
-        speaker: false,
-        role: false,
-        timeSlot: false,
+        speaker: {
+          isMerged: false,
+          color: '',
+          mergeId: '',
+          mergeName: '',
+          value: null
+        },
+        role: {
+          isMerged: false,
+          color: '',
+          mergeId: '',
+          mergeName: '',
+          value: null
+        },
+        timeSlot: {
+          isMerged: false,
+          color: '',
+          mergeId: '',
+          mergeName: '',
+          value: null
+        }
       },
     };
   };
@@ -223,8 +259,8 @@ function App() {
     );
   };
 
-  const onDragEnd = (result) => {
-    const { destination, source, draggableId, type } = result;
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, type } = result;
 
     if (!destination) {
       return;

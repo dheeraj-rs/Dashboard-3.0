@@ -1,10 +1,5 @@
-import { useState, useEffect } from "react";
-import { Participant } from "../../types/scheduler";
-
-interface ParticipantFormProps {
-  onSubmit: (participant: Partial<Participant>) => void;
-  initialData?: Participant;
-}
+import { useState } from "react";
+import { Participant, ParticipantFormProps } from '../../types/scheduler';
 
 export default function ParticipantForm({ onSubmit, initialData }: ParticipantFormProps) {
   const [formData, setFormData] = useState<Partial<Participant>>({

@@ -1,22 +1,6 @@
 import React, { useState } from "react";
-import { TableHeader } from "../../types/scheduler";
+import { HeaderSettingsModalProps } from '../../types/scheduler';
 import { Trash2 } from "lucide-react";
-
-interface HeaderSettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  headers: TableHeader[];
-  onUpdateHeaders: (headers: TableHeader[]) => void;
-  onApplyStyles: (styles: {
-    headerColor: string;
-    textColor: string;
-    borderColor: string;
-    columnColors: { [key: string]: string };
-    sectionColors: { [key: string]: string };
-    subsectionColors: { [key: string]: string };
-    mergedItemColors: { [key: string]: string };
-  }) => void;
-}
 
 const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
   isOpen,
