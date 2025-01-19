@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   PlusCircle,
-  Check,
   X,
   Settings,
   Search,
@@ -23,7 +22,7 @@ import {
   SectionWithLevel,
   SelectionState,
   MergedCell,
-} from '../../types/scheduler';
+} from "../../types/scheduler";
 import { groupSectionsByRole } from "../../utils";
 import HeaderSettingsModal from "../Modal/HeaderSettingsModal";
 import ColorSelectionModal from "../Modal/ColorSelectionModal";
@@ -65,7 +64,10 @@ const findAllSections = (sections: Section[]): SectionWithLevel[] => {
   return allSections;
 };
 
-const getSectionValue = (section: SectionWithLevel, key: keyof MergedFields) => {
+const getSectionValue = (
+  section: SectionWithLevel,
+  key: keyof MergedFields
+) => {
   return section[key as keyof Section];
 };
 
@@ -80,9 +82,12 @@ const SectionRow = ({
   setFlyoverState,
 }: SectionRowProps & {
   selection?: SelectionState;
-  onSelect?: (cellId: string, sectionId: string, columnType: keyof MergedFields) => void;
+  onSelect?: (
+    cellId: string,
+    sectionId: string,
+    columnType: keyof MergedFields
+  ) => void;
 }) => {
-  
   const getLevelColor = (level: number) => {
     return (
       sectionLevelColors[level as keyof typeof sectionLevelColors] ||
@@ -90,9 +95,13 @@ const SectionRow = ({
     );
   };
 
-  const getMergedCellInfo = (sectionId: string, columnType: keyof MergedFields) => {
+  const getMergedCellInfo = (
+    sectionId: string,
+    columnType: keyof MergedFields
+  ) => {
     return selection?.mergedCellsHistory.find(
-      cell => cell.sectionIds.includes(sectionId) && cell.columnType === columnType
+      (cell) =>
+        cell.sectionIds.includes(sectionId) && cell.columnType === columnType
     );
   };
 
@@ -104,7 +113,7 @@ const SectionRow = ({
   const getColumnClassName = (columnType: keyof MergedFields) => {
     const baseClasses = "border-b border-r text-sm relative cursor-pointer";
     const timeClasses = columnType === "timeSlot" ? "pr-2" : "px-4 py-2";
-    
+
     const mergedCell = getMergedCellInfo(section.id, columnType);
     const isSelected = isColumnSelected(columnType);
 
@@ -162,12 +171,15 @@ const SectionRow = ({
   const renderColumnContent = (columnType: keyof MergedFields) => {
     const mergedCell = getMergedCellInfo(section.id, columnType);
     const isSelected = isColumnSelected(columnType);
+    const isActiveSection = mergedCell?.sectionIds.includes(section.id);
 
     let content;
     if (columnType === "timeSlot") {
       content = renderTimeSlot(section.timeSlot, level);
     } else {
-      content = mergedCell ? mergedCell.value : getSectionValue(section, columnType as keyof MergedFields);
+      content = mergedCell
+        ? mergedCell.value
+        : getSectionValue(section, columnType as keyof MergedFields);
     }
 
     return (
@@ -185,12 +197,10 @@ const SectionRow = ({
           <div className={columnType === "timeSlot" ? "" : "px-2"}>
             {content}
           </div>
-          {mergedCell && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600">
-                {mergedCell.mergeName}
-              </span>
-            </div>
+          {mergedCell && isActiveSection && (
+            <span className="text-xs text-gray-600">
+              {mergedCell.mergeName}
+            </span>
           )}
         </div>
       </div>
@@ -315,19 +325,22 @@ export default function SectionList({
     mergeName: "",
     mergedCellsHistory: [],
     selectedColumns: [],
+    unmergeMode: false,
+    selectedMergeId: null,
+    selectedColumnType: null,
   });
   const [showColorModal, setShowColorModal] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullScreen) {
+      if (e.key === "Escape" && isFullScreen) {
         setIsFullScreen(false);
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isFullScreen]);
 
   const handleSelect = (
@@ -335,12 +348,19 @@ export default function SectionList({
     sectionIdOrColumnType: string | number,
     columnType?: keyof MergedFields
   ) => {
-    const sectionId = columnType ? sectionIdOrColumnType as string : cellIdOrSectionId;
-    const actualColumnType = (columnType || sectionIdOrColumnType) as keyof MergedFields;
-    const cellId = columnType ? cellIdOrSectionId : `${sectionId}-${actualColumnType}`;
+    const sectionId = columnType
+      ? (sectionIdOrColumnType as string)
+      : cellIdOrSectionId;
+    const actualColumnType = (columnType ||
+      sectionIdOrColumnType) as keyof MergedFields;
+    const cellId = columnType
+      ? cellIdOrSectionId
+      : `${sectionId}-${actualColumnType}`;
 
     const allSections = findAllSections(sections);
-    const targetSection = allSections.find((s) => s.id === sectionId) as SectionWithLevel;
+    const targetSection = allSections.find(
+      (s) => s.id === sectionId
+    ) as SectionWithLevel;
     if (!targetSection) return;
 
     setSelection((prev) => {
@@ -348,28 +368,12 @@ export default function SectionList({
         (cell) => cell.cellId === cellId
       );
 
-      // Check if cell is already part of a merged group
+      // Check if cell is part of a merged group
       const existingMergedCell = prev.mergedCellsHistory.find(
-        cell => cell.sectionIds.includes(sectionId) && cell.columnType === actualColumnType
+        (cell) =>
+          cell.sectionIds.includes(sectionId) &&
+          cell.columnType === actualColumnType
       );
-
-      if (existingMergedCell) {
-        // If selecting a merged cell, select all cells in the merge group
-        const mergedGroupCells = existingMergedCell.sectionIds.map(id => ({
-          cellId: `${id}-${actualColumnType}`,
-          sectionId: id,
-          columnType: actualColumnType,
-          originalValue: existingMergedCell.value,
-          level: targetSection.level || 0,
-          mergeId: existingMergedCell.id,
-        }));
-        
-        return {
-          ...prev,
-          isSelecting: true,
-          selectedCells: mergedGroupCells,
-        };
-      }
 
       if (prev.selectedCells.length > 0) {
         const firstColumnType = prev.selectedCells[0].columnType;
@@ -381,13 +385,26 @@ export default function SectionList({
 
       let newSelectedCells = [...prev.selectedCells];
       if (!existingSelection) {
-        newSelectedCells.push({
-          cellId,
-          sectionId,
-          columnType: actualColumnType,
-          originalValue: getSectionValue(targetSection, actualColumnType),
-          level: targetSection.level || 0,
-        });
+        if (existingMergedCell) {
+          // Add all cells from the merged group
+          const mergedGroupCells = existingMergedCell.sectionIds.map((id) => ({
+            cellId: `${id}-${actualColumnType}`,
+            sectionId: id,
+            columnType: actualColumnType,
+            originalValue: existingMergedCell.value,
+            level: targetSection.level || 0,
+            mergeId: existingMergedCell.id,
+          }));
+          newSelectedCells = [...newSelectedCells, ...mergedGroupCells];
+        } else {
+          newSelectedCells.push({
+            cellId,
+            sectionId,
+            columnType: actualColumnType,
+            originalValue: getSectionValue(targetSection, actualColumnType),
+            level: targetSection.level || 0,
+          });
+        }
       } else {
         newSelectedCells = prev.selectedCells.filter(
           (cell) => cell.cellId !== cellId
@@ -410,14 +427,27 @@ export default function SectionList({
 
     const columnType = selection.selectedCells[0]?.columnType;
 
-    if (!columnType || selection.selectedCells.length < 2) {
-      alert("Please select at least 2 cells to merge");
+    if (!columnType || selection.selectedCells.length < 1) {
+      alert("Please select at least 1 cell to merge");
       return;
     }
 
-    const mergeId = `merge-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const sectionIds = selection.selectedCells.map(cell => cell.sectionId);
-    
+    // Remove any existing merges for selected cells
+    const existingMergeIds = new Set(
+      selection.selectedCells
+        .filter((cell) => cell.mergeId)
+        .map((cell) => cell.mergeId)
+    );
+
+    existingMergeIds.forEach((mergeId) => {
+      if (mergeId) handleUnmergeSelection(mergeId, columnType);
+    });
+
+    const mergeId = `merge-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+    const sectionIds = selection.selectedCells.map((cell) => cell.sectionId);
+
     // Create new merged cell entry
     const newMergedCell: MergedCell = {
       id: mergeId,
@@ -429,7 +459,7 @@ export default function SectionList({
     };
 
     // Update all affected sections
-    sectionIds.forEach(sectionId => {
+    sectionIds.forEach((sectionId) => {
       onUpdateSection(sectionId, {
         mergedFields: {
           [columnType]: {
@@ -443,7 +473,8 @@ export default function SectionList({
       });
     });
 
-    setSelection(prev => ({
+    setSelection((prev) => ({
+      ...prev,
       isSelecting: false,
       selectedCells: [],
       selectedColor: colorOptions[0].class,
@@ -455,7 +486,47 @@ export default function SectionList({
     setShowColorModal(false);
   };
 
-  const groupedSections = useMemo(() => groupSectionsByRole(sections), [sections]);
+  const handleUnmergeSelection = (
+    mergeId: string,
+    columnType: keyof MergedFields
+  ) => {
+    const mergedCell = selection.mergedCellsHistory.find(
+      (cell) => cell.id === mergeId
+    );
+
+    if (!mergedCell) return;
+
+    // Update all affected sections to remove merge
+    mergedCell.sectionIds.forEach((sectionId) => {
+      onUpdateSection(sectionId, {
+        mergedFields: {
+          [columnType]: {
+            isMerged: false,
+            color: "",
+            mergeName: "",
+            value: null,
+            mergeId: "",
+          },
+        },
+      });
+    });
+
+    // Remove from merge history
+    setSelection((prev) => ({
+      ...prev,
+      mergedCellsHistory: prev.mergedCellsHistory.filter(
+        (cell) => cell.id !== mergeId
+      ),
+      selectedCells: prev.selectedCells.filter(
+        (cell) => cell.mergeId !== mergeId
+      ),
+    }));
+  };
+
+  const groupedSections = useMemo(
+    () => groupSectionsByRole(sections),
+    [sections]
+  );
 
   const filteredSections = useMemo(() => {
     if (!searchQuery) return groupedSections;
@@ -488,26 +559,49 @@ export default function SectionList({
   );
 
   const SelectionIndicator = () => {
-    if (!selection.selectedCells.length) return null;
+    const hasMergedCells = selection.selectedCells.some((cell) => cell.mergeId);
+    const uniqueMergeIds = new Set(
+      selection.selectedCells
+        .filter((cell) => cell.mergeId)
+        .map((cell) => cell.mergeId)
+    );
 
     return (
-      <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 z-50">
+      <div >
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium min-w-36">
             {selection.selectedCells.length} cells selected (
             {selection.selectedCells[0]?.columnType})
           </span>
+
+          {hasMergedCells && uniqueMergeIds.size === 1 && (
+            <button
+              onClick={() => {
+                const mergeId = selection.selectedCells[0]?.mergeId;
+                if (mergeId && selection.selectedCells[0]?.columnType) {
+                  handleUnmergeSelection(
+                    mergeId,
+                    selection.selectedCells[0].columnType
+                  );
+                }
+              }}
+              className="px-3 py-1.5 rounded-md text-sm bg-red-600 text-white hover:bg-red-700"
+            >
+              Unmerge Selection
+            </button>
+          )}
+
           <button
             onClick={() => setShowColorModal(true)}
-            disabled={selection.selectedCells.length < 2}
             className={`px-3 py-1.5 rounded-md text-sm ${
-              selection.selectedCells.length < 2
+              selection.selectedCells.length < 1
                 ? "bg-gray-200 text-gray-500"
                 : "bg-indigo-600 text-white hover:bg-indigo-700"
             }`}
           >
-            Merge Cells
+            {hasMergedCells ? "Merge as New" : "Merge Cells"}
           </button>
+
           <button
             onClick={() =>
               setSelection({
@@ -517,6 +611,9 @@ export default function SectionList({
                 mergeName: "",
                 mergedCellsHistory: selection.mergedCellsHistory,
                 selectedColumns: [],
+                unmergeMode: false,
+                selectedMergeId: null,
+                selectedColumnType: null
               })
             }
             className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md text-sm hover:bg-gray-300"
@@ -528,15 +625,66 @@ export default function SectionList({
     );
   };
 
+  const UnmergeIndicator = () => {
+    if (!selection.unmergeMode || !selection.selectedMergeId) return null;
+
+    const mergedCell = selection.mergedCellsHistory.find(
+      (cell) => cell.id === selection.selectedMergeId
+    );
+
+    if (!mergedCell) return null;
+
+    return (
+      <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 z-50">
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">
+              Selected Merge: {mergedCell.mergeName}
+            </span>
+            <span className="text-xs text-gray-500">
+              {mergedCell.sectionIds.length} cells merged
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              if (selection.selectedColumnType) {
+                handleUnmergeSelection(
+                  mergedCell.id,
+                  selection.selectedColumnType
+                );
+              }
+            }}
+            className="px-3 py-1.5 rounded-md text-sm bg-red-600 text-white hover:bg-red-700"
+          >
+            Unmerge Cells
+          </button>
+          <button
+            onClick={() => {
+              setSelection((prev) => ({
+                ...prev,
+                unmergeMode: false,
+                selectedMergeId: null,
+                selectedColumnType: null,
+              }));
+            }}
+            className="px-3 py-1.5 rounded-md text-sm bg-gray-200 hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div 
-      className={`
-        bg-white overflow-hidden transition-all duration-300
-        ${isFullScreen ? 'fixed inset-0 z-[80] w-screen h-screen' : 'relative w-full'}
-      `}
-    >
+    <div className={`
+      ${isFullScreen 
+        ? 'fixed inset-0 z-50 bg-white flex flex-col h-screen w-screen overflow-hidden' 
+        : 'relative flex flex-col'
+      }
+    `}>
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white border-b">
+      <div className="flex-shrink-0 bg-white border-b z-20">
         <div className="p-4">
           {activeTrack && (
             <div className="flex flex-col md:flex-row flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-violet-50/40 rounded-xl px-6 py-4 shadow-sm border border-gray-100">
@@ -549,15 +697,16 @@ export default function SectionList({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-5">
-              
                 <button
-                  onClick={() => setIsFullScreen(prev => !prev)}
+                  onClick={() => setIsFullScreen((prev) => !prev)}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
                 >
                   {isFullScreen ? (
                     <>
                       <Minimize2 className="w-4 h-4" />
-                      <span className="text-sm font-medium">Exit Full Screen</span>
+                      <span className="text-sm font-medium">
+                        Exit Full Screen
+                      </span>
                     </>
                   ) : (
                     <>
@@ -566,7 +715,7 @@ export default function SectionList({
                     </>
                   )}
                 </button>
-             
+
                 {selection.isSelecting ? (
                   <TableProperties
                     className="w-5 h-5 cursor-pointer"
@@ -588,38 +737,20 @@ export default function SectionList({
                     }
                   />
                 )}
-                   <Settings
+                <Settings
                   className="w-5 h-5 cursor-pointer"
                   onClick={() => setShowHeaderSettings(true)}
                 />
                 {selection.isSelecting ? (
-                  <>
-                    <button
-                      onClick={() => setShowColorModal(true)}
-                      className="flex items-center gap-1.5 px-4 py-2 text-slate-50 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors duration-200"
-                    >
-                      <Check className="w-5 h-5" />
-                      <span className="text-sm font-medium">Apply Selection</span>
-                    </button>
-                    <button
-                      onClick={() =>
-                        setSelection({
-                          isSelecting: false,
-                          selectedCells: [],
-                          selectedColor: colorOptions[0].class,
-                          mergeName: "",
-                          mergedCellsHistory: selection.mergedCellsHistory,
-                          selectedColumns: [],
-                        })
-                      }
-                      className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-red-500 rounded-lg hover:bg-red-600 transition-colors duration-200"
-                    >
-                      <X className="w-5 h-5" />
-                      <span className="text-sm font-medium">Cancel</span>
-                    </button>
+                 <>
+                  <SelectionIndicator />
+                  {selection.unmergeMode ? <UnmergeIndicator /> : null}
                   </>
+                  
+               
                 ) : (
-                  <button
+                  
+                   <button
                     onClick={() =>
                       setFlyoverState({
                         isOpen: true,
@@ -662,11 +793,11 @@ export default function SectionList({
       </div>
 
       {/* Main Content */}
-      <div className="p-4">
-        <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
+      <div className="flex-1 p-4 overflow-hidden">
+        <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow h-full flex flex-col">
+          <div className="overflow-auto flex-1">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead>
+              <thead className="sticky top-0 bg-white z-10">
                 <tr>{tableHeaders}</tr>
               </thead>
               <tbody>
@@ -708,9 +839,6 @@ export default function SectionList({
         onClose={() => setShowColorModal(false)}
         onApply={handleApplySelection}
       />
-
-      {/* Selection Indicator */}
-      <SelectionIndicator />
     </div>
   );
 }

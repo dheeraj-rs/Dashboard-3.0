@@ -243,6 +243,9 @@ export interface SelectionState {
   mergeName: string;
   mergedCellsHistory: MergedCell[];
   selectedColumns: { sectionId: string; columnType: string | number; }[];
+  unmergeMode: boolean;
+  selectedMergeId: string | null;
+  selectedColumnType: keyof MergedFields | null;
 }
 
 export interface SectionWithLevel extends Section {
