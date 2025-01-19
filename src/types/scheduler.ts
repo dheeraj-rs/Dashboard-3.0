@@ -4,12 +4,13 @@ export interface TimeSlot {
 }
 
 export interface MergedFields {
-  speaker: boolean;
-  role: boolean;
-  timeSlot: boolean;
-  color?: string;
-  name?: string;
-  mergeId?: string;
+  [key: string]: {
+    isMerged: boolean;
+    color: string;
+    mergeId: string;
+    mergeName: string;
+    value: any;
+  };
 }
 
 export interface Section {
@@ -85,6 +86,7 @@ export interface SectionRowProps {
   speaker?: string;
   role?: string;
   rowSpan?: number;
+  parentTimeSlot?: TimeSlot;
   onAddSubsection?: (sectionId: string) => void;
   onUpdateSection: (sectionId: string, updates: Partial<Section>) => void;
   selection?: SelectionState;

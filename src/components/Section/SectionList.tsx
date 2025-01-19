@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   PlusCircle,
   ChevronRight,
@@ -20,10 +20,10 @@ import {
   TableHeader,
   SectionRowProps,
   MergedFields,
+  TimeSlot,
 } from "../../types/scheduler";
 import { groupSectionsByRole } from "../../utils/sectionUtils";
 import HeaderSettingsModal from "../Modal/HeaderSettingsModal";
-import { Draggable, Droppable } from "react-beautiful-dnd";
 import ColorSelectionModal from "../Modal/ColorSelectionModal";
 
 const sectionLevelColors = {
@@ -48,13 +48,50 @@ const colorOptions = [
 
 type ColorClass = typeof colorOptions[number]["class"];
 
-interface SelectionState {
-  isSelecting: boolean;
-  selectedColumns: { sectionId: string; columnType: keyof MergedFields }[];
-  selectedColor: ColorClass;
+interface MergedCell {
+  id: string;
+  sectionIds: string[];
+  color: string;
+  mergeName: string;
+  columnType: keyof MergedFields;
+  value: any;
 }
 
-function SectionRow({
+interface CellSelection {
+  cellId: string;
+  sectionId: string;
+  columnType: keyof MergedFields;
+  originalValue: any;
+  level: number;
+  mergeId?: string;
+}
+
+interface SelectionState {
+  isSelecting: boolean;
+  selectedCells: CellSelection[];
+  selectedColor: ColorClass;
+  mergeName: string;
+  mergedCellsHistory: MergedCell[];
+}
+
+const findAllSections = (sections: Section[]): Section[] => {
+  let allSections: Section[] = [];
+
+  const traverse = (section: Section, level = 0) => {
+    allSections.push({ ...section, level });
+    section.subsections?.forEach((subsection) => {
+      traverse(subsection, level + 1);
+    });
+  };
+
+  sections.forEach((section) => {
+    traverse(section);
+  });
+
+  return allSections;
+};
+
+const SectionRow = ({
   section,
   level = 0,
   showSpeakerRole = true,
@@ -65,8 +102,8 @@ function SectionRow({
   setFlyoverState,
 }: SectionRowProps & {
   selection?: SelectionState;
-  onSelect?: (sectionId: string, columnType: keyof MergedFields) => void;
-}) {
+  onSelect?: (cellId: string, sectionId: string, columnType: keyof MergedFields) => void;
+}) => {
   const getLevelColor = (level: number) => {
     return (
       sectionLevelColors[level as keyof typeof sectionLevelColors] ||
@@ -74,26 +111,111 @@ function SectionRow({
     );
   };
 
-  const isColumnSelected = (columnType: keyof MergedFields) => {
-    return selection?.selectedColumns.some(
-      (col) => col.sectionId === section.id && col.columnType === columnType
+  const getMergedCellInfo = (sectionId: string, columnType: keyof MergedFields) => {
+    return selection?.mergedCellsHistory.find(
+      cell => cell.sectionIds.includes(sectionId) && cell.columnType === columnType
     );
+  };
+
+  const isColumnSelected = (columnType: keyof MergedFields) => {
+    const cellId = `${section.id}-${columnType}`;
+    return selection?.selectedCells.some((cell) => cell.cellId === cellId);
+  };
+
+  const getColumnClassName = (columnType: keyof MergedFields) => {
+    const baseClasses = "border-b border-r text-sm relative cursor-pointer";
+    const timeClasses = columnType === "timeSlot" ? "pr-2" : "px-4 py-2";
+    
+    const mergedCell = getMergedCellInfo(section.id, columnType);
+    const isSelected = isColumnSelected(columnType);
+
+    const classes = [
+      baseClasses,
+      timeClasses,
+      mergedCell ? mergedCell.color : "",
+      mergedCell ? "font-medium" : "",
+      isSelected ? "ring-2 ring-indigo-400 bg-indigo-50" : "",
+      selection?.isSelecting ? "hover:bg-indigo-50/50" : "",
+      "transition-colors duration-200",
+    ];
+
+    return classes.filter(Boolean).join(" ");
   };
 
   const handleColumnClick = (columnType: keyof MergedFields) => {
     if (!selection?.isSelecting || !onSelect) return;
-    onSelect(section.id, columnType);
+    const cellId = `${section.id}-${columnType}`;
+    onSelect(cellId, section.id, columnType);
   };
 
-  const getColumnClassName = (columnType: keyof MergedFields) => {
-    const baseClasses = "px-4 py-2 border-b border-r text-sm";
-    const selectedClass = isColumnSelected(columnType)
-      ? `${selection?.selectedColor} ring-2 ring-offset-1 ring-indigo-400`
-      : "";
-    const mergedClass = section.mergedFields?.[columnType]
-      ? `${section.mergedFields.color} font-medium`
-      : "";
-    return `${baseClasses} ${selectedClass} ${mergedClass}`;
+  const renderTimeSlot = (timeSlot: TimeSlot, level: number) => {
+    const baseIndent = 24;
+    const indentWidth = level * baseIndent;
+
+    return (
+      <div className="flex items-center min-h-[2rem] relative">
+        {level > 0 && (
+          <div
+            className="absolute flex items-center h-full"
+            style={{ left: `${indentWidth}px` }}
+          >
+            <div
+              className="absolute h-full w-[2px] bg-gray-200"
+              style={{ left: "-1px", top: "-50%" }}
+            />
+            <div className="h-[2px] w-4 bg-gray-200" />
+            <div className="w-2 h-2 rounded-full border border-gray-300 bg-white" />
+          </div>
+        )}
+        <span
+          className={`
+            whitespace-nowrap
+            ${level > 0 ? "text-gray-500 text-sm" : "text-gray-700 font-medium"}
+          `}
+          style={{ marginLeft: level > 0 ? `${indentWidth + 32}px` : "8px" }}
+        >
+          {timeSlot.start} - {timeSlot.end}
+        </span>
+      </div>
+    );
+  };
+
+  const renderColumnContent = (columnType: keyof MergedFields) => {
+    const mergedCell = getMergedCellInfo(section.id, columnType);
+    const isSelected = isColumnSelected(columnType);
+
+    let content;
+    if (columnType === "timeSlot") {
+      content = renderTimeSlot(section.timeSlot, level);
+    } else {
+      content = mergedCell ? mergedCell.value : section[columnType];
+    }
+
+    return (
+      <div
+        className={`
+          relative group
+          ${mergedCell ? mergedCell.color : ""}
+          ${isSelected ? "ring-2 ring-indigo-400" : ""}
+          ${mergedCell ? "font-medium" : ""}
+          ${columnType === "timeSlot" ? "pl-0" : "p-2"}
+          rounded transition-all duration-200
+        `}
+      >
+        <div className="flex items-center justify-between">
+          <div className={columnType === "timeSlot" ? "" : "px-2"}>
+            {content}
+          </div>
+          {mergedCell && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-600">
+                {mergedCell.mergeName}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const renderActionButtons = (section: Section) => (
@@ -113,7 +235,7 @@ function SectionRow({
         <span>Add Sub</span>
       </button>
       <Edit
-        className="w-4 h-4 mr-2"
+        className="w-4 h-4 mr-2 cursor-pointer"
         onClick={() =>
           setFlyoverState({
             isOpen: true,
@@ -123,94 +245,76 @@ function SectionRow({
         }
       />
       <Trash
-        className="w-4 h-4 mr-2"
+        className="w-4 h-4 mr-2 cursor-pointer"
         onClick={() => onUpdateSection(section.id, { deleted: true })}
       />
     </div>
   );
 
   return (
-    <Draggable key={section.id} draggableId={section.id} index={level}>
-      {(provided) => (
-        <>
-          <tr
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            className={getLevelColor(level)}
-          >
+    <>
+      <tr className={getLevelColor(level)}>
+        <td
+          id={`${section.id}-timeSlot`}
+          className={getColumnClassName("timeSlot")}
+          onClick={() => handleColumnClick("timeSlot")}
+        >
+          {renderColumnContent("timeSlot")}
+        </td>
+        <td
+          id={`${section.id}-name`}
+          className={getColumnClassName("name")}
+          onClick={() => handleColumnClick("name")}
+        >
+          {renderColumnContent("name")}
+        </td>
+        {showSpeakerRole && (
+          <>
             <td
-              className={getColumnClassName("timeSlot")}
-              onClick={() => handleColumnClick("timeSlot")}
+              id={`${section.id}-speaker`}
+              className={getColumnClassName("speaker")}
+              onClick={() => handleColumnClick("speaker")}
             >
-              <div
-                className="flex items-center gap-1"
-                style={{ paddingLeft: `${level * 1}rem` }}
-              >
-                {level > 0 && (
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                )}
-                <span className="whitespace-nowrap">
-                  {section.timeSlot.start} - {section.timeSlot.end}
-                </span>
-              </div>
+              {renderColumnContent("speaker")}
             </td>
             <td
-              className={getColumnClassName("name")}
-              onClick={() => handleColumnClick("name")}
+              id={`${section.id}-role`}
+              className={getColumnClassName("role")}
+              onClick={() => handleColumnClick("role")}
             >
-              {section.name}
+              {renderColumnContent("role")}
             </td>
-            {showSpeakerRole && (
-              <>
-                <td
-                  className={getColumnClassName("speaker")}
-                  onClick={() => handleColumnClick("speaker")}
-                >
-                  {section.speaker}
-                </td>
-                <td
-                  className={getColumnClassName("role")}
-                  onClick={() => handleColumnClick("role")}
-                >
-                  {section.role}
-                </td>
-              </>
-            )}
-            <td className="px-4 py-2 border-b text-sm">
-              {!selection?.isSelecting && renderActionButtons(section)}
-            </td>
-          </tr>
+          </>
+        )}
+        <td className="px-4 py-2 border-b text-sm">
+          {!selection?.isSelecting && renderActionButtons(section)}
+        </td>
+      </tr>
 
-          {/* Render Subsections */}
-          {section.subsections?.map((subsection) => (
-            <SectionRow
-              key={subsection.id}
-              section={subsection}
-              level={level + 1}
-              showSpeakerRole={showSpeakerRole}
-              onAddSubsection={onAddSubsection}
-              onUpdateSection={onUpdateSection}
-              selection={selection}
-              onSelect={onSelect}
-              setFlyoverState={setFlyoverState}
-            />
-          ))}
-        </>
-      )}
-    </Draggable>
+      {section.subsections?.map((subsection) => (
+        <SectionRow
+          key={subsection.id}
+          section={subsection}
+          level={level + 1}
+          showSpeakerRole={showSpeakerRole}
+          onAddSubsection={onAddSubsection}
+          onUpdateSection={onUpdateSection}
+          selection={selection}
+          onSelect={onSelect}
+          setFlyoverState={setFlyoverState}
+        />
+      ))}
+    </>
   );
-}
+};
 
 export default function SectionList({
   sections,
-  onAddSection,
   onUpdateSection,
   onAddSubsection,
   activeTrack,
   setFlyoverState,
 }: SectionListProps) {
-  const groupedSections = groupSectionsByRole(sections);
   const [isFullView, setIsFullView] = useState(false);
   const [showHeaderSettings, setShowHeaderSettings] = useState(false);
   const [headers, setHeaders] = useState<TableHeader[]>([
@@ -228,54 +332,129 @@ export default function SectionList({
   const [searchQuery, setSearchQuery] = useState("");
   const [selection, setSelection] = useState<SelectionState>({
     isSelecting: false,
-    selectedColumns: [],
+    selectedCells: [],
     selectedColor: colorOptions[0].class,
+    mergeName: "",
+    mergedCellsHistory: [],
   });
   const [showColorModal, setShowColorModal] = useState(false);
 
-  const handleSelect = (sectionId: string, columnType: keyof MergedFields) => {
+  const handleSelect = (cellId: string, sectionId: string, columnType: keyof MergedFields) => {
+    const allSections = findAllSections(sections);
+    const targetSection = allSections.find((s) => s.id === sectionId);
+    if (!targetSection) return;
+
     setSelection((prev) => {
-      const existingSelection = prev.selectedColumns.find(
-        (col) => col.sectionId === sectionId && col.columnType === columnType
+      const existingSelection = prev.selectedCells.find(
+        (cell) => cell.cellId === cellId
       );
+
+      // Check if cell is already part of a merged group
+      const existingMergedCell = prev.mergedCellsHistory.find(
+        cell => cell.sectionIds.includes(sectionId) && cell.columnType === columnType
+      );
+
+      if (existingMergedCell) {
+        // If selecting a merged cell, select all cells in the merge group
+        const mergedGroupCells = existingMergedCell.sectionIds.map(id => ({
+          cellId: `${id}-${columnType}`,
+          sectionId: id,
+          columnType,
+          originalValue: existingMergedCell.value,
+          level: targetSection.level || 0,
+          mergeId: existingMergedCell.id,
+        }));
+        
+        return {
+          ...prev,
+          isSelecting: true,
+          selectedCells: mergedGroupCells,
+        };
+      }
+
+      if (prev.selectedCells.length > 0) {
+        const firstColumnType = prev.selectedCells[0].columnType;
+        if (columnType !== firstColumnType) {
+          alert("You can only merge cells of the same type");
+          return prev;
+        }
+      }
+
+      let newSelectedCells = [...prev.selectedCells];
+      if (!existingSelection) {
+        newSelectedCells.push({
+          cellId,
+          sectionId,
+          columnType,
+          originalValue: targetSection[columnType],
+          level: targetSection.level || 0,
+        });
+      } else {
+        newSelectedCells = prev.selectedCells.filter(
+          (cell) => cell.cellId !== cellId
+        );
+      }
+
       return {
         ...prev,
-        selectedColumns: existingSelection
-          ? prev.selectedColumns.filter(
-              (col) =>
-                !(col.sectionId === sectionId && col.columnType === columnType)
-            )
-          : [...prev.selectedColumns, { sectionId, columnType }],
+        isSelecting: true,
+        selectedCells: newSelectedCells,
       };
     });
   };
-
   const handleApplySelection = (color: string, mergeName: string) => {
     if (!mergeName.trim()) {
       alert("Please enter a merge name");
       return;
     }
 
-    const mergeId = `merge-${Date.now()}`;
+    const columnType = selection.selectedCells[0]?.columnType;
 
-    selection.selectedColumns.forEach(({ sectionId, columnType }) => {
+    if (!columnType || selection.selectedCells.length < 2) {
+      alert("Please select at least 2 cells to merge");
+      return;
+    }
+
+    const mergeId = `merge-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const sectionIds = selection.selectedCells.map(cell => cell.sectionId);
+    
+    // Create new merged cell entry
+    const newMergedCell: MergedCell = {
+      id: mergeId,
+      sectionIds,
+      color,
+      mergeName,
+      columnType,
+      value: selection.selectedCells[0].originalValue,
+    };
+
+    // Update all affected sections
+    sectionIds.forEach(sectionId => {
       onUpdateSection(sectionId, {
         mergedFields: {
-          [columnType]: true,
-          color,
-          mergeId,
-          name: mergeName,
+          [columnType]: {
+            isMerged: true,
+            color,
+            mergeName,
+            value: selection.selectedCells[0].originalValue,
+            mergeId,
+          },
         },
       });
     });
 
-    setSelection({
+    setSelection(prev => ({
       isSelecting: false,
-      selectedColumns: [],
+      selectedCells: [],
       selectedColor: colorOptions[0].class,
-    });
+      mergeName: "",
+      mergedCellsHistory: [...prev.mergedCellsHistory, newMergedCell],
+    }));
+
     setShowColorModal(false);
   };
+
+  const groupedSections = useMemo(() => groupSectionsByRole(sections), [sections]);
 
   const filteredSections = useMemo(() => {
     if (!searchQuery) return groupedSections;
@@ -296,7 +475,7 @@ export default function SectionList({
             key={header.id}
             className="px-4 py-2 border-b border-r text-left text-sm font-semibold"
             style={{
-              backgroundColor: tableStyles.headerColor,
+              background: tableStyles.headerColor,
               color: tableStyles.textColor,
               borderColor: tableStyles.borderColor,
             }}
@@ -307,40 +486,164 @@ export default function SectionList({
     [headers, tableStyles]
   );
 
-  return (
-    <Droppable droppableId={activeTrack?.id || "sections"} type="section">
-      {(provided) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.droppableProps}
-          className={`transition-all duration-300 ease-in-out ${
-            isFullView ? "fixed inset-0 z-50 bg-white" : "relative"
-          }`}
+  const SelectionIndicator = () => {
+    if (!selection.selectedCells.length) return null;
+
+    return (
+      <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 z-50">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">
+            {selection.selectedCells.length} cells selected (
+            {selection.selectedCells[0]?.columnType})
+          </span>
+          <button
+            onClick={() => setShowColorModal(true)}
+            disabled={selection.selectedCells.length < 2}
+            className={`px-3 py-1.5 rounded-md text-sm ${
+              selection.selectedCells.length < 2
+                ? "bg-gray-200 text-gray-500"
+                : "bg-indigo-600 text-white hover:bg-indigo-700"
+            }`}
+          >
+            Merge Cells
+          </button>
+          <button
+            onClick={() =>
+              setSelection({
+                isSelecting: false,
+                selectedCells: [],
+                selectedColor: colorOptions[0].class,
+                mergeName: "",
+                mergedCellsHistory: selection.mergedCellsHistory,
+              })
+            }
+            className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md text-sm hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const FullScreenLayout = () => (
+    <>
+      {/* Full Screen Header */}
+      <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b">
+        <h2 className="text-xl font-semibold text-slate-800">
+          {activeTrack?.name || 'Section List'}
+        </h2>
+        <button
+          onClick={() => setIsFullView(false)}
+          className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-red-500 rounded-lg hover:bg-red-600 transition-colors duration-200"
         >
-          {/* Sections Header */}
-          <div className={`${isFullView ? "sticky top-0 z-10 bg-white p-4 shadow-sm" : ""}`}>
+          <Minimize2 className="w-5 h-5" />
+          <span className="text-sm font-medium">Exit Full Screen</span>
+        </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="px-6 py-4 border-b">
+        <div className="relative max-w-2xl">
+          <input
+            type="text"
+            placeholder="Search sections..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-10 top-2.5 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Table Container */}
+      <div className="flex-1 overflow-auto px-6 py-4">
+        <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>{tableHeaders}</tr>
+              </thead>
+              <tbody>
+                {filteredSections.map((group, groupIndex) => (
+                  <React.Fragment key={groupIndex}>
+                    {group.sections.map((section) => (
+                      <SectionRow
+                        key={section.id}
+                        section={section}
+                        showSpeakerRole={headers.find((h) => h.type === "speaker")?.isVisible}
+                        onAddSubsection={onAddSubsection}
+                        onUpdateSection={onUpdateSection}
+                        selection={selection}
+                        onSelect={handleSelect}
+                        setFlyoverState={setFlyoverState}
+                      />
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  useEffect(() => {
+    const handleFullScreen = async () => {
+      if (isFullView) {
+        try {
+          if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+          }
+        } catch (err) {
+          console.error('Failed to enter full screen:', err);
+        }
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
+      }
+    };
+
+    handleFullScreen();
+
+    return () => {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    };
+  }, [isFullView]);
+
+  return (
+    <div className="relative">
+      {isFullView ? (
+        <div className="fixed inset-0 bg-white z-50 flex flex-col overflow-hidden">
+          <FullScreenLayout />
+        </div>
+      ) : (
+        <>
+          {/* Regular view content */}
+          <div className="sticky top-0 z-10 bg-white p-4 shadow-sm">
             {activeTrack && (
               <div className="flex flex-col md:flex-row flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-violet-50/40 rounded-xl px-6 py-4 shadow-sm border border-gray-100">
                 <div className="flex flex-col md:flex-row items-center gap-4">
                   <div className="text-lg font-bold text-blue-700 flex-shrink-0">
-                    Current Track :{" "}
+                    Current Track:{" "}
                     <span className="text-xl font-light text-blue-800">
                       {activeTrack.name}
                     </span>
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-5">
-                  {isFullView ? (
-                    <Minimize2
-                      className="w-5 h-5 cursor-pointer"
-                      onClick={() => setIsFullView(!isFullView)}
-                    />
-                  ) : (
-                    <Maximize2
-                      className="w-5 h-5 cursor-pointer"
-                      onClick={() => setIsFullView(!isFullView)}
-                    />
-                  )}
                   <Settings
                     className="w-5 h-5 cursor-pointer"
                     onClick={() => setShowHeaderSettings(true)}
@@ -381,8 +684,10 @@ export default function SectionList({
                         onClick={() =>
                           setSelection({
                             isSelecting: false,
-                            selectedColumns: [],
+                            selectedCells: [],
                             selectedColor: colorOptions[0].class,
+                            mergeName: "",
+                            mergedCellsHistory: selection.mergedCellsHistory,
                           })
                         }
                         className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-red-500 rounded-lg hover:bg-red-600 transition-colors duration-200"
@@ -410,7 +715,7 @@ export default function SectionList({
               </div>
             )}
           </div>
-
+          
           {/* Search Bar */}
           <div className="mt-4 px-4">
             <div className="relative">
@@ -432,16 +737,11 @@ export default function SectionList({
               )}
             </div>
           </div>
-
-          <div
-            className={`${
-              isFullView
-                ? "px-4 py-4 h-[calc(100vh-8rem)] overflow-y-auto"
-                : "mt-4 h-full"
-            }`}
-          >
+          
+          {/* Main Content Table */}
+          <div className="mt-4 h-full">
             <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow overflow-hidden">
-              <div className="overflow-x-auto h-full">
+              <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>
                     <tr>{tableHeaders}</tr>
@@ -449,11 +749,11 @@ export default function SectionList({
                   <tbody>
                     {filteredSections.map((group, groupIndex) => (
                       <React.Fragment key={groupIndex}>
-                        {group.sections.map((section, sectionIndex) => (
+                        {group.sections.map((section) => (
                           <SectionRow
                             key={section.id}
                             section={section}
-                            showSpeakerRole={sectionIndex === 0}
+                            showSpeakerRole={headers.find((h) => h.type === "speaker")?.isVisible}
                             onAddSubsection={onAddSubsection}
                             onUpdateSection={onUpdateSection}
                             selection={selection}
@@ -468,35 +768,28 @@ export default function SectionList({
               </div>
             </div>
           </div>
-          {provided.placeholder}
-
-          {/* Header Settings Modal */}
-          {showHeaderSettings && (
-            <HeaderSettingsModal
-              isOpen={showHeaderSettings}
-              onClose={() => setShowHeaderSettings(false)}
-              headers={headers}
-              onUpdateHeaders={(updatedHeaders) => setHeaders(updatedHeaders)}
-              onApplyStyles={(styles) => {
-                setTableStyles({
-                  headerColor: styles.headerColor,
-                  textColor: styles.textColor,
-                  borderColor: styles.borderColor,
-                });
-              }}
-            />
-          )}
-
-          {/* Color Selection Modal */}
-          {showColorModal && (
-            <ColorSelectionModal
-              isOpen={showColorModal}
-              onClose={() => setShowColorModal(false)}
-              onApply={handleApplySelection}
-            />
-          )}
-        </div>
+        </>
       )}
-    </Droppable>
+
+      {/* Modals */}
+      {showHeaderSettings && (
+        <HeaderSettingsModal
+          isOpen={showHeaderSettings}
+          onClose={() => setShowHeaderSettings(false)}
+          headers={headers}
+          onUpdateHeaders={setHeaders}
+          onApplyStyles={setTableStyles}
+        />
+      )}
+
+      <ColorSelectionModal
+        isOpen={showColorModal}
+        onClose={() => setShowColorModal(false)}
+        onApply={handleApplySelection}
+      />
+
+      {/* Selection Indicator */}
+      <SelectionIndicator />
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useCallback } from "react";
 import {
   Menu,
   Bell,
@@ -9,6 +9,8 @@ import {
   Mail,
   X,
 } from "lucide-react";
+import debounce from 'lodash/debounce';
+
 interface DashboardLayoutProps {
   children: ReactNode;
   navigationItems: Array<{
@@ -18,6 +20,7 @@ interface DashboardLayoutProps {
   }>;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onSearch?: (query: string) => void;
 }
 
 export default function DashboardLayout({
@@ -25,10 +28,12 @@ export default function DashboardLayout({
   navigationItems,
   activeTab,
   setActiveTab,
+  onSearch,
 }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMiniSidebar, setIsMiniSidebar] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Handle screen resize
   useEffect(() => {
@@ -62,6 +67,28 @@ export default function DashboardLayout({
       setIsSidebarOpen(!isSidebarOpen);
       setIsMobileMenuOpen(!isMobileMenuOpen);
     }
+  };
+
+  // Debounced search handler
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      if (onSearch) {
+        onSearch(query);
+      }
+    }, 300),
+    [onSearch]
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    debouncedSearch(query);
+  };
+
+  const handleSearch = (query: string) => {
+    // Implement your search logic here
+    console.log('Searching for:', query);
+    // You can filter your data, make API calls, etc.
   };
 
   return (
@@ -213,11 +240,24 @@ export default function DashboardLayout({
                 <div className="hidden lg:block relative">
                   <input
                     type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
                     placeholder="Search..."
                     className="w-80 pl-10 pr-4 py-2 rounded-xl bg-slate-50 border-0 focus:ring-2 
                       focus:ring-violet-500/20 transition-all"
                   />
                   <Search className="h-5 w-5 text-slate-400 absolute left-3 top-2.5" />
+                  {searchQuery && (
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        debouncedSearch('');
+                      }}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
