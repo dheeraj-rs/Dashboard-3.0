@@ -22,6 +22,7 @@ function App() {
   });
 
   useEffect(() => {
+    console.clear();
     console.log(tracks);
   }, [tracks]);
 
