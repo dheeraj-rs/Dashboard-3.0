@@ -17,18 +17,12 @@ function App() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const [flyoverState, setFlyoverState] = useState<FlyoverState>({
     isOpen: false,
     type: "",
     data: null,
   });
-
-  useEffect(() => {
-    console.clear();
-    console.log(tracks);
-  }, [tracks]);
-
-  const [participants, setParticipants] = useState<Participant[]>([]);
 
   const navigationItems = [
     { id: "schedule", label: "Schedule", icon: Calendar },
@@ -46,13 +40,42 @@ function App() {
         endDate: trackData.endDate || new Date().toISOString(),
         sections: trackData.sections || []
       };
-
       setTracks(prev => [...prev, newTrack]);
-      showToast.success("Track created successfully");
       return true;
     } catch (error) {
       showToast.error("Failed to create track");
       return false;
+    }
+  };
+
+  const handleUpdateTrack = (trackData: Partial<Track>): boolean => {
+    try {
+      setTracks(prev => prev.map(track => 
+        track.id === trackData.id ? { ...track, ...trackData } : track
+      ));
+      return true;
+    } catch (error) {
+      showToast.error("Failed to update track");
+      return false;
+    }
+  };
+
+  const handleDeleteTrack = (trackId: string) => {
+    try {
+      if (selectedTrackId === trackId) {
+        const remainingTracks = tracks.filter((track) => track.id !== trackId);
+        if (remainingTracks.length > 0) {
+          setSelectedTrackId(remainingTracks[0].id);
+        } else {
+          setSelectedTrackId(null);
+        }
+      }
+
+      setTracks((prev) => prev.filter((track) => track.id !== trackId));
+      showToast.success("Track deleted successfully");
+    } catch (error) {
+      showToast.error("Failed to delete track");
+      console.error("Error deleting track:", error);
     }
   };
 
@@ -247,36 +270,33 @@ function App() {
     setTracks(updatedTracks);
   };
 
-  const handleUpdateTrack = (trackData: Partial<Track>): boolean => {
-    try {
-      setTracks(prev => prev.map(track => 
-        track.id === trackData.id ? { ...track, ...trackData } : track
-      ));
-      showToast.success("Track updated successfully");
-      return true;
-    } catch (error) {
-      showToast.error("Failed to update track");
-      return false;
-    }
+  const handleAddParticipant = (participantData: Partial<Participant>) => {
+    const newParticipant: Participant = {
+      id: crypto.randomUUID(),
+      name: participantData.name || "",
+      role: participantData.role || "",
+      email: participantData.email || "",
+      organization: participantData.organization || "",
+      sessions: participantData.sessions || [],
+    };
+    setParticipants((prev) => [...prev, newParticipant]);
   };
 
-  const handleDeleteTrack = (trackId: string) => {
-    try {
-      if (selectedTrackId === trackId) {
-        const remainingTracks = tracks.filter((track) => track.id !== trackId);
-        if (remainingTracks.length > 0) {
-          setSelectedTrackId(remainingTracks[0].id);
-        } else {
-          setSelectedTrackId(null);
-        }
-      }
+  const handleUpdateParticipant = (
+    participantId: string,
+    updates: Partial<Participant>
+  ) => {
+    setParticipants((prev) =>
+      prev.map((participant) =>
+        participant.id === participantId
+          ? { ...participant, ...updates }
+          : participant
+      )
+    );
+  };
 
-      setTracks((prev) => prev.filter((track) => track.id !== trackId));
-      showToast.success("Track deleted successfully");
-    } catch (error) {
-      showToast.error("Failed to delete track");
-      console.error("Error deleting track:", error);
-    }
+  const handleDeleteParticipant = (participantId: string) => {
+    setParticipants((prev) => prev.filter((p) => p.id !== participantId));
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -338,34 +358,11 @@ function App() {
     }
   };
 
-  const handleAddParticipant = (participantData: Partial<Participant>) => {
-    const newParticipant: Participant = {
-      id: crypto.randomUUID(),
-      name: participantData.name || "",
-      role: participantData.role || "",
-      email: participantData.email || "",
-      organization: participantData.organization || "",
-      sessions: participantData.sessions || [],
-    };
-    setParticipants((prev) => [...prev, newParticipant]);
-  };
 
-  const handleUpdateParticipant = (
-    participantId: string,
-    updates: Partial<Participant>
-  ) => {
-    setParticipants((prev) =>
-      prev.map((participant) =>
-        participant.id === participantId
-          ? { ...participant, ...updates }
-          : participant
-      )
-    );
-  };
-
-  const handleDeleteParticipant = (participantId: string) => {
-    setParticipants((prev) => prev.filter((p) => p.id !== participantId));
-  };
+  useEffect(() => {
+    console.clear();
+    console.log(tracks);
+  }, [tracks]);
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
