@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { HeaderSettingsModalProps } from '../../types/scheduler';
 import { Trash2 } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "../Modal/Alert";
 
 const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
   isOpen,
@@ -71,7 +72,6 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
 
   const handleAddItem = () => {
     if (!newItemName.trim()) {
-      alert("Please enter a valid name.");
       return;
     }
 
@@ -110,204 +110,205 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-50 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Table Customization</h2>
-
+   <>
+     {/* Modal Header */}
           {/* Header Label Customization */}
-          <div className="mb-6">
-            <h3 className="text-lg font-medium text-gray-700 mb-3">Header Labels</h3>
-            <div className="space-y-2">
-              {localHeaders.map((header) => (
-                <div key={header.id} className="flex items-center gap-2">
-                  <label className="text-sm text-gray-600">{header.type}</label>
-                  <input
-                    type="text"
-                    value={header.label}
-                    onChange={(e) => handleHeaderLabelChange(header.id, e.target.value)}
-                    className="flex-1 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  />
-                  <input
-                    type="color"
-                    value={columnColors[header.type] || "#f9fafb"}
-                    onChange={(e) => handleColumnColorChange(header.type, e.target.value)}
-                    className="w-6 h-6 rounded-md cursor-pointer"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+          <section className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900">Header Labels</h3>
+              <div className="space-y-3">
+                {localHeaders.map((header) => (
+                  <div key={header.id} className="group flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm transition-shadow hover:shadow-md">
+                    <span className="text-sm font-medium text-gray-700">{header.type}</span>
+                    <input
+                      type="text"
+                      value={header.label}
+                      onChange={(e) => handleHeaderLabelChange(header.id, e.target.value)}
+                      className="flex-1 rounded-md border-gray-300 bg-gray-50 px-3 py-1.5 text-sm transition-colors focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200"
+                    />
+                    <input
+                      type="color"
+                      value={columnColors[header.type] || "#f9fafb"}
+                      onChange={(e) => handleColumnColorChange(header.type, e.target.value)}
+                      className="h-8 w-8 cursor-pointer rounded-md border-2 border-gray-200"
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
 
-          {/* Header, Text, and Border Color Customization */}
-          <div className="mb-6">
-            <h3 className="text-lg font-medium text-gray-700 mb-3">Colors</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Header Color</label>
-                <input
-                  type="color"
-                  value={headerColor}
-                  onChange={(e) => setHeaderColor(e.target.value)}
-                  className="w-full h-8 rounded-md cursor-pointer"
-                />
+            {/* Colors Section */}
+            <section className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900">Colors</h3>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {[
+                  { label: "Header Color", value: headerColor, onChange: setHeaderColor },
+                  { label: "Text Color", value: textColor, onChange: setTextColor },
+                  { label: "Border Color", value: borderColor, onChange: setBorderColor },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-lg border bg-white p-3 shadow-sm">
+                    <label className="block text-sm font-medium text-gray-700">{item.label}</label>
+                    <input
+                      type="color"
+                      value={item.value}
+                      onChange={(e) => item.onChange(e.target.value)}
+                      className="mt-2 h-8 w-full cursor-pointer rounded-md"
+                    />
+                  </div>
+                ))}
               </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Text Color</label>
-                <input
-                  type="color"
-                  value={textColor}
-                  onChange={(e) => setTextColor(e.target.value)}
-                  className="w-full h-8 rounded-md cursor-pointer"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Border Color</label>
-                <input
-                  type="color"
-                  value={borderColor}
-                  onChange={(e) => setBorderColor(e.target.value)}
-                  className="w-full h-8 rounded-md cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
+            </section>
 
-          {/* Section and Subsection Color Customization */}
-          <div className="mb-6">
-            <h3 className="text-lg font-medium text-gray-700 mb-3">Sections & Subsections</h3>
-            <div className="space-y-2">
-              {Object.keys(sectionColors).map((sectionId) => (
-                <div key={sectionId} className="flex items-center gap-2">
-                  <label className="text-sm text-gray-600">Section {sectionId}</label>
-                  <input
-                    type="color"
-                    value={sectionColors[sectionId]}
-                    onChange={(e) => handleSectionColorChange(sectionId, e.target.value)}
-                    className="w-6 h-6 rounded-md cursor-pointer"
-                  />
+            {/* Sections & Subsections */}
+            <section className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900">Sections & Subsections</h3>
+              <div className="space-y-3">
+                {Object.entries(sectionColors).map(([sectionId, color]) => (
+                  <div key={sectionId} className="group flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm transition-all hover:shadow-md">
+                    <span className="text-sm font-medium text-gray-700">Section {sectionId}</span>
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={(e) => handleSectionColorChange(sectionId, e.target.value)}
+                      className="h-8 w-8 cursor-pointer rounded-md border-2 border-gray-200"
+                    />
+                    <button
+                      onClick={() => handleDeleteSection(sectionId)}
+                      className="ml-auto rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                {Object.entries(subsectionColors).map(([subsectionId, color]) => (
+                  <div key={subsectionId} className="group flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm transition-all hover:shadow-md">
+                    <span className="text-sm font-medium text-gray-700">Subsection {subsectionId}</span>
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={(e) => handleSubsectionColorChange(subsectionId, e.target.value)}
+                      className="h-8 w-8 cursor-pointer rounded-md border-2 border-gray-200"
+                    />
+                    <button
+                      onClick={() => handleDeleteSubsection(subsectionId)}
+                      className="ml-auto rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <div className="flex gap-3">
                   <button
-                    onClick={() => handleDeleteSection(sectionId)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
+                    onClick={() => {
+                      setNewItemType("section");
+                      setShowAddItemAlert(true);
+                    }}
+                    className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    Add Section
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNewItemType("subsection");
+                      setShowAddItemAlert(true);
+                    }}
+                    className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Add Subsection
                   </button>
                 </div>
-              ))}
-              {Object.keys(subsectionColors).map((subsectionId) => (
-                <div key={subsectionId} className="flex items-center gap-2">
-                  <label className="text-sm text-gray-600">Subsection {subsectionId}</label>
-                  <input
-                    type="color"
-                    value={subsectionColors[subsectionId]}
-                    onChange={(e) => handleSubsectionColorChange(subsectionId, e.target.value)}
-                    className="w-6 h-6 rounded-md cursor-pointer"
-                  />
-                  <button
-                    onClick={() => handleDeleteSubsection(subsectionId)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={() => {
-                  setNewItemType("section");
-                  setShowAddItemAlert(true);
-                }}
-                className="w-full px-2 py-1 text-sm text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Add Section
-              </button>
-              <button
-                onClick={() => {
-                  setNewItemType("subsection");
-                  setShowAddItemAlert(true);
-                }}
-                className="w-full px-2 py-1 text-sm text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Add Subsection
-              </button>
-            </div>
-          </div>
+              </div>
+            </section>
 
-          {/* Merged Items Color Customization */}
-          <div className="mb-6">
-            <h3 className="text-lg font-medium text-gray-700 mb-3">Merged Items</h3>
-            <div className="space-y-2">
-              {Object.keys(mergedItemColors).map((itemName) => (
-                <div key={itemName} className="flex items-center gap-2">
-                  <label className="text-sm text-gray-600">{itemName}</label>
-                  <input
-                    type="color"
-                    value={mergedItemColors[itemName]}
-                    onChange={(e) => handleMergedItemColorChange(itemName, e.target.value)}
-                    className="w-6 h-6 rounded-md cursor-pointer"
-                  />
-                  <button
-                    onClick={() => handleDeleteMergedItem(itemName)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={() => {
-                  setNewItemType("mergedItem");
-                  setShowAddItemAlert(true);
-                }}
-                className="w-full px-2 py-1 text-sm text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Add Merged Item
-              </button>
-            </div>
-          </div>
+            {/* Merged Items */}
+            <section className="space-y-4 pb-24">
+              <h3 className="text-lg font-medium text-gray-900">Merged Items</h3>
+              <div className="space-y-3">
+                {Object.entries(mergedItemColors).map(([itemName, color]) => (
+                  <div key={itemName} className="group flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm transition-all hover:shadow-md">
+                    <span className="text-sm font-medium text-gray-700">{itemName}</span>
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={(e) => handleMergedItemColorChange(itemName, e.target.value)}
+                      className="h-8 w-8 cursor-pointer rounded-md border-2 border-gray-200"
+                    />
+                    <button
+                      onClick={() => handleDeleteMergedItem(itemName)}
+                      className="ml-auto rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => {
+                    setNewItemType("mergedItem");
+                    setShowAddItemAlert(true);
+                  }}
+                  className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Add Merged Item
+                </button>
+              </div>
+            </section>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3">
+          {/* Modal Footer */}
+          <div className="sticky bottom-10 flex justify-end gap-3 border-t bg-white/80 p-4 backdrop-blur-sm">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-sm"
+              className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
             >
               Cancel
             </button>
             <button
               onClick={handleApply}
-              className="px-4 py-2 text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors text-sm"
+              className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Apply
+              Apply Changes
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Add Item Alert Box */}
+      {/* Add Item Dialog */}
       {showAddItemAlert && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-50 rounded-lg shadow-lg p-6 w-full max-w-sm">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Add {newItemType === "section" ? "Section" : newItemType === "subsection" ? "Subsection" : "Merged Item"}
-            </h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder={`Enter ${newItemType} name`}
-                value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
-                className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-2xl">
+            <div className="border-b p-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Add {newItemType === "section" ? "Section" : newItemType === "subsection" ? "Subsection" : "Merged Item"}
+              </h3>
+            </div>
+            <div className="space-y-4 p-4">
+              <div>
+                <label htmlFor="itemName" className="block text-sm font-medium text-gray-700">
+                  Name
+                </label>
+                <input
+                  id="itemName"
+                  type="text"
+                  placeholder={`Enter ${newItemType} name`}
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                />
+                {!newItemName.trim() && (
+                  <Alert className="mt-2" variant="destructive">
+                    <AlertTitle>Required</AlertTitle>
+                    <AlertDescription>
+                      Please enter a name for the {newItemType === "section" ? "section" : newItemType === "subsection" ? "subsection" : "merged item"}.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowAddItemAlert(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-sm"
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddItem}
-                  className="px-4 py-2 text-slate-50 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                  disabled={!newItemName.trim()}
+                  className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Add
                 </button>
@@ -316,7 +317,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
           </div>
         </div>
       )}
-    </div>
+   </>
   );
 };
 

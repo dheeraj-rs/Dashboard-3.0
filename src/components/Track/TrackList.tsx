@@ -1,34 +1,63 @@
 import { useState, useRef, useEffect } from "react";
-import { PlusCircle, Users, Clock, Search, Layers, Settings, X } from "lucide-react";
-import { Section, Track, TrackListProps } from '../../types/scheduler';
+import {
+  Clock,
+  PlusCircle,
+  Search,
+  Settings,
+  Users,
+  X,
+} from "lucide-react";
+import { Section, Track, TrackListProps } from "../../types/scheduler";
 import { Draggable } from "react-beautiful-dnd";
+import CalendarFilter from "./CalendarFilter";
 
 export default function TrackList({
   tracks,
   onSelectTrack,
   selectedTrackId,
   setFlyoverState,
+  onDeleteTrack,
 }: TrackListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [dateFilter, setDateFilter] = useState<{ type: 'day' | 'month' | 'year', value: string } | null>(null);
 
-  // Set first track as active by default
   useEffect(() => {
     if (tracks.length > 0 && !selectedTrackId) {
       onSelectTrack(tracks[0].id);
     }
   }, [tracks, selectedTrackId, onSelectTrack]);
 
-  const filteredTracks = tracks.filter((track) =>
-    track.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTracks = tracks.filter((track) => {
+    // First apply search filter
+    const matchesSearch = track.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Then apply date filter if active
+    if (dateFilter) {
+      const trackDate = new Date(track.startDate);
+      
+      switch (dateFilter.type) {
+        case 'year':
+          return matchesSearch && trackDate.getFullYear().toString() === dateFilter.value;
+        case 'month':
+          const [year, month] = dateFilter.value.split('-');
+          return matchesSearch && 
+            trackDate.getFullYear().toString() === year &&
+            (trackDate.getMonth() + 1).toString().padStart(2, '0') === month;
+        default:
+          return matchesSearch;
+      }
+    }
+    
+    return matchesSearch;
+  });
 
   const totalSections = tracks.reduce(
     (acc, track) => acc + track.sections.length,
     0
   );
 
-  const totalParticipants: number = tracks.reduce(
+  const totalParticipants = tracks.reduce(
     (acc: number, track: Track) =>
       acc +
       track.sections.reduce(
@@ -38,118 +67,137 @@ export default function TrackList({
     0
   );
 
-  const getTrackColor = (track: any, index: number) => {
-    if (track.id === selectedTrackId) {
-      return "bg-blue-600 text-white ring-2 ring-blue-500";
-    }
-    const colors = [
-      "bg-purple-500/10 text-purple-600",
-      "bg-green-500/10 text-green-600",
-      "bg-orange-500/10 text-orange-600",
-    ];
-    return colors[index % colors.length];
-  };
-
-  // Format date and time for display
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return `${date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric'
+    })}`;
   };
 
   return (
-    <div className="space-y-6">
-      <div className="relative bg-white rounded-lg shadow-sm">
-        {/* Header Section */}
-        <div className="relative bg-white rounded-lg shadow-sm">
-  {/* Header Section */}
-  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg shadow-sm p-4 border border-gray-100">
-    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-      {/* Tracks Heading */}
-      <div className="text-xl font-bold text-blue-700 flex-shrink-0">
-        Tracks
-      </div>
+    <div className="space-y-4">
+      {/* Header Section */}
+      <div className="bg-white rounded-xl shadow-sm">
+        {/* Main Header Container */}
+        <div className="p-3 sm:p-4">
+          <div className="flex flex-col gap-4 w-full">
+            {/* Top Row - Title and Stats */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              {/* Left Side - Title and Stats */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+                <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+                  Tracks
+                </h2>
+                
+                {/* Stats - Scrollable on mobile */}
+                <div className="flex items-center gap-3 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
+                  <div className="flex items-center gap-2 text-blue-600 whitespace-nowrap min-w-max px-2">
+                    <Users className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm font-medium flex flex-col md:flex-row">{tracks.length} <span className="md:block hidden">Tracks</span></span>
+                  </div>
+                  <div className="flex items-center gap-2 text-violet-600 whitespace-nowrap min-w-max px-2">
+                    <Clock className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm font-medium flex flex-col md:flex-row">{totalSections} <span className="md:block hidden">Sections</span></span>
+                  </div>
+                  <div className="flex items-center gap-2 text-green-600 whitespace-nowrap min-w-max px-2">
+                    <Users className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm font-medium flex flex-col md:flex-row">{totalParticipants} <span className="md:block hidden">Participants</span></span>
+                  </div>
+                </div>
+              </div>              
 
-      {/* Stats Section */}
-      <div className="flex flex-wrap items-center justify-center gap-2 w-full md:w-auto">
-        {/* Tracks Stat */}
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-white hover:bg-gray-50 transition-colors duration-200">
-          <Layers className="w-4 h-4 text-blue-600" />
-          <div className="text-sm text-gray-700">
-            <span className="font-medium">{tracks.length}</span> Tracks
+              <button
+            onClick={() => {
+                  setFlyoverState({
+                    isOpen: true,
+                    type: "add-track",
+                    data: null
+                  });
+                }}
+            className=" sm:w-36 w-full flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-violet-600 
+              text-white text-sm font-medium rounded-xl relative group overflow-hidden
+              hover:shadow-lg transform transition-all duration-300 
+              hover:scale-[1.02] hover:translate-y-[-1px]
+              active:scale-[0.98] active:translate-y-[1px]"
+          >
+            {/* Background Animation */}
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-blue-500 to-violet-500 
+              opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            />
+
+            {/* Content */}
+            <div className="relative flex items-center gap-2">
+              <PlusCircle className="w-4 h-4 transform group-hover:rotate-180 transition-transform duration-500" />
+              <span className="relative">New Track</span>
+            </div>
+
+            {/* Shine Effect */}
+            <div
+              className="absolute inset-0 transform translate-x-[-100%] group-hover:translate-x-[100%] 
+              bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform 
+              duration-1000 ease-out"
+            />
+          </button>
+            </div>
+
+            {/* Bottom Row - Search and Filter */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <div className="w-full sm:w-auto">
+                <CalendarFilter
+                  tracks={tracks}
+                  onFilterChange={(filter) => setDateFilter(filter)}
+                  activeFilter={dateFilter}
+                />
+              </div>
+              
+              <div className="relative flex-1 group">
+                <div className="relative transform transition-all duration-200 group-hover:scale-[1.02]">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-10 py-2.5 text-sm bg-white rounded-xl border border-gray-200 
+                      focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 
+                      placeholder-gray-400 transition-all duration-200 group-hover:shadow-md"
+                  />
+                  <Search
+                    className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 
+                    transition-colors duration-200 group-hover:text-blue-500"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full 
+                        hover:bg-gray-100 text-gray-400 hover:text-gray-600 
+                        transition-all duration-200 hover:rotate-90"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {searchQuery && (
+                  <div className="absolute right-0 mt-1 text-xs text-gray-500">
+                    {filteredTracks.length} results found
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Sections Stat */}
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-white hover:bg-gray-50 transition-colors duration-200">
-          <Clock className="w-4 h-4 text-purple-600" />
-          <div className="text-sm text-gray-700">
-            <span className="font-medium">{totalSections}</span> Sections
-          </div>
-        </div>
-
-        {/* Participants Stat */}
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-white hover:bg-gray-50 transition-colors duration-200">
-          <Users className="w-4 h-4 text-green-600" />
-          <div className="text-sm text-gray-700">
-            <span className="font-medium">{totalParticipants}</span> Participants
-          </div>
-        </div>
       </div>
 
-      {/* Search and New Track Button */}
-      <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
-        {/* Search Input */}
-        <div className="relative w-full sm:w-48">
-          <input
-            type="text"
-            placeholder="Search tracks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-8 py-1.5 text-sm bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-2" />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* New Track Button */}
-        <button
-          onClick={() =>
-            setFlyoverState({
-              isOpen: true,
-              type: "add-track",
-              data: {
-                name: "",
-                startDate: new Date().toISOString(), // Default to current date and time
-                endDate: new Date().toISOString(), // Default to current date and time
-              },
-            })
-          }
-          className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>New Track</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-        {/* Track List with Scroll Buttons */}
-        {filteredTracks?.length > 0 && (
+      {/* Track List - Enhanced Grid Layout with Fixed Height */}
+      {filteredTracks?.length > 0 && (
+        <div className="relative">
           <div
             ref={scrollContainerRef}
-            className="flex flex-nowrap overflow-x-auto scrollbar-hide py-3 px-4 gap-4 min-h-[90px]"
+            className="h-full overflow-y-auto px-1 py-2
+              grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4
+              scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
           >
             {filteredTracks.map((track, index) => (
               <Draggable key={track.id} draggableId={track.id} index={index}>
@@ -160,67 +208,78 @@ export default function TrackList({
                     {...provided.dragHandleProps}
                     onClick={() => onSelectTrack(track.id)}
                     className={`
-                      flex-none w-full sm:w-72 rounded-lg cursor-pointer transition-all duration-200
+                      group relative p-4 rounded-xl cursor-pointer
+                      transform transition-all duration-300 ease-out
+                      hover:scale-[1.02] hover:-translate-y-1
                       ${
                         track.id === selectedTrackId
-                          ? "bg-gradient-to-r from-blue-500/10 to-blue-400/5 border-l-4 border-blue-500 shadow-md transform scale-105"
-                          : "bg-white border border-gray-200 hover:border-blue-200 hover:shadow-sm"
+                          ? "bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg shadow-blue-100/50 border-l-4 border-blue-500"
+                          : "bg-white hover:bg-gradient-to-br hover:from-gray-50 hover:to-blue-50/30"
                       }
+                      before:absolute before:inset-0 before:rounded-xl before:shadow-md
+                      before:transition-all before:duration-300
+                      hover:before:shadow-lg hover:before:shadow-blue-100/30
+                      motion-safe:animate-fadeIn
                     `}
+                    style={{
+                      perspective: '1000px',
+                      transformStyle: 'preserve-3d'
+                    }}
                   >
-                    <div className="px-4 py-3">
+                    {/* Glass Effect Overlay */}
+                    <div className="absolute inset-0 rounded-xl bg-white/40 backdrop-blur-sm opacity-0 
+                      group-hover:opacity-100 transition-opacity duration-300 shadow-lg" />
+
+                    {/* Content Container */}
+                    <div className="relative z-10">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`
-                              p-2 rounded-lg transition-all duration-200
-                              ${
-                                track.id === selectedTrackId
-                                  ? "bg-blue-500 text-white"
-                                  : `${getTrackColor(track, index)}`
-                              }
-                            `}
-                          >
-                            <Layers className="w-4 h-4" />
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="text-sm font-medium text-gray-900 truncate
+                            group-hover:text-blue-700 transition-colors duration-200">
+                            {track.name}
                           </div>
-                          <div className="flex flex-col">
-                            <span
-                              className={`
-                                text-sm font-medium truncate max-w-[120px]
-                                ${
-                                  track.id === selectedTrackId
-                                    ? "text-blue-700"
-                                    : "text-gray-900"
-                                }
-                              `}
-                            >
-                              {track.name}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {formatDateTime(track.startDate)} - {formatDateTime(track.endDate)}
-                            </span>
+                          <div className="text-xs text-gray-500 flex items-center gap-2">
+                            <span className="inline-block w-2 h-2 rounded-full bg-blue-400" />
+                            {formatDateTime(track.startDate)} - {formatDateTime(track.endDate)}
                           </div>
                         </div>
+
+                        {/* Settings Button with Enhanced Animation */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setFlyoverState({
                               isOpen: true,
-                              type: "edit-track",
-                              data: track,
+                              type: "track-settings",
+                              data: {
+                                track,
+                                onDelete: () => onDeleteTrack(track.id)
+                              },
                             });
                           }}
-                          className={`
-                            p-1.5 rounded-md transition-colors
-                            ${
-                              track.id === selectedTrackId
-                                ? "text-blue-600 hover:bg-blue-100"
-                                : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                            }
-                          `}
+                          className="ml-2 p-2 rounded-lg bg-transparent
+                            hover:bg-blue-50 transition-all duration-200
+                            transform group-hover:rotate-180
+                            opacity-50 group-hover:opacity-100"
                         >
-                          <Settings className="w-4 h-4" />
+                          <Settings className="w-4 h-4 text-blue-600" />
                         </button>
+                      </div>
+
+                      {/* Track Stats */}
+                      <div className="mt-3 pt-3 border-t border-gray-100
+                        grid grid-cols-2 gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                          <span>{track.sections.length} Sections</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                          <span>
+                            {track.sections.reduce((acc, section) => 
+                              acc + (section.speaker ? 1 : 0), 0)} Speakers
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -228,8 +287,8 @@ export default function TrackList({
               </Draggable>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

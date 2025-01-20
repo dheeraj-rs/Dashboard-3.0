@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Section, SectionFormProps } from '../../types/scheduler';
+import { validateTimeSlot } from '../../utils/validations';
+import { showToast } from '../Modal/CustomToast';
 
 type SectionField = keyof Omit<Section, 'id' | 'subsections' | 'deleted'>;
 
@@ -56,13 +58,11 @@ export default function SectionForm({ onSubmit, initialData, isSubsection }: Sec
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    const mergedFields = formData.mergedFields;
-    if (!mergedFields?.timeSlot?.isMerged) {
-      const startTime = new Date(`2000-01-01T${timeSlot.start}`);
-      const endTime = new Date(`2000-01-01T${timeSlot.end}`);
-      
-      if (endTime <= startTime) {
-        alert('End time must be after start time');
+    const timeSlot = formData.timeSlot!;
+    if (!formData.mergedFields?.timeSlot?.isMerged) {
+      const validationError = validateTimeSlot(timeSlot.start, timeSlot.end);
+      if (validationError) {
+        showToast.error(validationError);
         return;
       }
     }

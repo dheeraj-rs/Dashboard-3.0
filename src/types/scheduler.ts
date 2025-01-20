@@ -52,7 +52,12 @@ export interface TrackListProps {
   tracks: Track[];
   onSelectTrack: (id: string) => void;
   selectedTrackId: string | null;
-  setFlyoverState: (state: any) => void;
+  setFlyoverState: (state: {
+    isOpen: boolean;
+    type: 'add-track' | 'edit-track' | 'add-section' | 'edit-section' | 'add-subsection' | 'track-settings';
+    data: any;
+  }) => void;
+  onDeleteTrack: (id: string) => void;
 }
 
 export interface TrackItemProps {
@@ -64,8 +69,9 @@ export interface TrackItemProps {
 }
 
 export interface TrackFormProps {
-  onSubmit: (track: Partial<Track>) => void;
+  onSubmit: (track: Partial<Track>) => boolean;
   initialData?: Track;
+  tracks?: Track[];
 }
 
 
@@ -77,7 +83,7 @@ export interface SectionListProps {
   activeTrack?: Track;
   setFlyoverState: (state: {
     isOpen: boolean;
-    type: 'add-track' | 'edit-track' | 'add-section' | 'edit-section' | 'add-subsection';
+    type: 'add-track' | 'edit-track' | 'add-section' | 'edit-section' | 'add-subsection' | 'header-settings';
     data: any;
   }) => void;
 }
@@ -162,20 +168,21 @@ export interface ColorSelectionModalProps {
 
 export interface FlyoverState {
   isOpen: boolean;
-  type: string | null;
+  type: 'add-track' | 'edit-track' | 'add-section' | 'edit-section' | 'add-subsection' | 
+        'track-settings' | 'header-settings' | 'add-participant' | 'edit-participant' | '' | null;
   data: any;
-
 }
 export interface FlyoverPanelProps {
   flyoverState: FlyoverState;
   getFlyoverTitle: (type: string | null) => string;
   setFlyoverState: (state: FlyoverState) => void;
-  handleUpdateTrack: (trackData: any) => void;
-  handleAddTrack: (trackData: any) => void;
+  handleUpdateTrack: (trackData: Partial<Track>) => boolean;
+  handleAddTrack: (trackData: Partial<Track>) => boolean;
   handleUpdateSection: (id: string, sectionData: any) => void;
   handleSubmitSection: (sectionData: any) => void;
   handleAddParticipant: (participantData: Partial<Participant>) => void;
   handleUpdateParticipant: (id: string, updates: Partial<Participant>) => void;
+  tracks: Track[];
 }
 
 
@@ -265,3 +272,35 @@ export interface SectionGroup {
   role: string;
   sections: Section[];
 }
+
+
+export interface TrackSettingsPanelProps {
+  track: Track;
+  onDelete: () => void;
+  setFlyoverState: (state: FlyoverState) => void;
+  handleUpdateTrack: (trackData: Partial<Track>) => boolean;
+  tracks: Track[];
+}
+
+export interface SectionCalendarFilterProps {
+  sections: Section[];
+  onFilterChange: (filter: { 
+    type: 'time' | 'day' | 'month', 
+    value: { 
+      start?: string; 
+      end?: string; 
+      day?: string;
+      month?: string;
+    } 
+  } | null) => void;
+  activeFilter: {
+    type: 'time' | 'day' | 'month',
+    value: { 
+      start?: string; 
+      end?: string; 
+      day?: string;
+      month?: string;
+    }
+  } | null;
+}
+

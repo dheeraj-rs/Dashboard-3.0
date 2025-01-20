@@ -53,6 +53,30 @@
   .rotate-x-2 {
     transform: rotateX(2deg);
   }
+
+  .hover-lift {
+    @apply transition-transform duration-200 hover:-translate-y-0.5;
+  }
+
+  .hover-glow {
+    @apply transition-all duration-300;
+  }
+  .hover-glow:hover {
+    @apply shadow-lg shadow-blue-500/25;
+  }
+
+  .button-pop {
+    @apply transform transition-all duration-200 
+    hover:scale-105 active:scale-95;
+  }
+
+  .icon-spin {
+    @apply transition-transform duration-500 hover:rotate-180;
+  }
+
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm;
+  }
 }
 
 .full-screen-container {

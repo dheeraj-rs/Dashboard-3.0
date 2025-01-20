@@ -3,6 +3,8 @@ import SectionForm from "../Section/SectionForm";
 import { X } from "lucide-react";
 import { FlyoverPanelProps } from '../../types/scheduler';
 import ParticipantForm from "../Participants/ParticipantForm";
+import TrackSettingsPanel from "../Track/TrackSettingsPanel";
+import HeaderSettingsModal from './HeaderSettingsModal';
 
 function FlyoverPanel({
   flyoverState,
@@ -14,11 +16,12 @@ function FlyoverPanel({
   handleSubmitSection,
   handleAddParticipant,
   handleUpdateParticipant,
+  tracks,
 }: FlyoverPanelProps) {
   return (
     <aside
       className={`
-        fixed inset-y-0 right-0 w-full max-w-xl bg-white shadow-2xl 
+        fixed inset-y-0 right-0 w-full max-w-96 bg-white shadow-2xl 
         transform transition-transform duration-300 ease-in-out z-[90]
         ${flyoverState.isOpen ? 'translate-x-0' : 'translate-x-full'}
       `}
@@ -45,15 +48,21 @@ function FlyoverPanel({
             initialData={
               flyoverState.type === "edit-track"
                 ? flyoverState.data
-                : undefined // No initialData for adding a new track
+                : undefined
             }
+            tracks={tracks}
             onSubmit={(trackData) => {
               if (flyoverState.type === "edit-track") {
                 handleUpdateTrack(trackData);
+                setFlyoverState({ isOpen: false, type: null, data: null });
+                return true;
               } else {
-                handleAddTrack(trackData);
+                const success = handleAddTrack(trackData);
+                if (success) {
+                  setFlyoverState({ isOpen: false, type: null, data: null });
+                }
+                return success;
               }
-              setFlyoverState({ isOpen: false, type: null, data: null });
             }}
           />
         )}
@@ -96,6 +105,28 @@ function FlyoverPanel({
               setFlyoverState({ isOpen: false, type: null, data: null });
             }}
           />
+        )}
+        
+        {flyoverState.type === "track-settings" && (
+          <TrackSettingsPanel
+            track={flyoverState.data.track}
+            onDelete={flyoverState.data.onDelete}
+            setFlyoverState={setFlyoverState}
+            handleUpdateTrack={handleUpdateTrack}
+            tracks={tracks}
+          />
+        )}
+
+        {flyoverState.type === "header-settings" && (
+          <div className="h-full">
+            <HeaderSettingsModal
+              isOpen={true}
+              onClose={() => setFlyoverState({ isOpen: false, type: null, data: null })}
+              headers={flyoverState.data.headers}
+              onUpdateHeaders={flyoverState.data.onUpdateHeaders}
+              onApplyStyles={flyoverState.data.onApplyStyles}
+            />
+          </div>
         )}
       </div>
 

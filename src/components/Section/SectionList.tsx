@@ -11,6 +11,10 @@ import {
   TableProperties,
   Maximize2,
   Minimize2,
+  Unlink,
+  Link,
+  Clock,
+  Layers,
 } from "lucide-react";
 import {
   Section,
@@ -24,8 +28,9 @@ import {
   MergedCell,
 } from "../../types/scheduler";
 import { groupSectionsByRole } from "../../utils";
-import HeaderSettingsModal from "../Modal/HeaderSettingsModal";
 import ColorSelectionModal from "../Modal/ColorSelectionModal";
+import SectionCalendarFilter from "./SectionCalendarFilter";
+import { showToast } from "../Modal/CustomToast";
 
 const sectionLevelColors = {
   0: "bg-blue-50 border-l-4 border-l-blue-500",
@@ -297,14 +302,13 @@ const SectionRow = ({
   );
 };
 
-export default function SectionList({
+function SectionList({
   sections,
   onUpdateSection,
   onAddSubsection,
   activeTrack,
   setFlyoverState,
 }: SectionListProps) {
-  const [showHeaderSettings, setShowHeaderSettings] = useState(false);
   const [headers, setHeaders] = useState<TableHeader[]>([
     { id: "1", label: "Time", type: "time", isVisible: true },
     { id: "2", label: "Section", type: "name", isVisible: true },
@@ -331,6 +335,10 @@ export default function SectionList({
   });
   const [showColorModal, setShowColorModal] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [sectionFilter, setSectionFilter] = useState<{
+    type: "time" | "day" | "month";
+    value: { start?: string; end?: string; day?: string; month?: string };
+  } | null>(null);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -378,7 +386,7 @@ export default function SectionList({
       if (prev.selectedCells.length > 0) {
         const firstColumnType = prev.selectedCells[0].columnType;
         if (actualColumnType !== firstColumnType) {
-          alert("You can only merge cells of the same type");
+          showToast.error('You can only merge cells of the same type');
           return prev;
         }
       }
@@ -529,14 +537,44 @@ export default function SectionList({
   );
 
   const filteredSections = useMemo(() => {
-    if (!searchQuery) return groupedSections;
-    return groupedSections.map((group) => ({
-      ...group,
-      sections: group.sections.filter((section) =>
-        section.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
-    }));
-  }, [groupedSections, searchQuery]);
+    let filtered = groupedSections;
+
+    // Text search filter
+    if (searchQuery) {
+      filtered = filtered.map((group) => ({
+        ...group,
+        sections: group.sections.filter((section) =>
+          section.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ),
+      }));
+    }
+
+    // Calendar filter
+    if (sectionFilter) {
+      filtered = filtered.map((group) => ({
+        ...group,
+        sections: group.sections.filter((section) => {
+          if (sectionFilter.type === "time" && sectionFilter.value.start) {
+            return (
+              section.timeSlot.start === sectionFilter.value.start ||
+              section.timeSlot.end === sectionFilter.value.start
+            );
+          }
+
+          if (sectionFilter.type === "day" && sectionFilter.value.day) {
+            const [hours] = section.timeSlot.start.split(":");
+            const date = new Date();
+            date.setHours(parseInt(hours), 0, 0, 0);
+            const dayName = date.toLocaleString("en-US", { weekday: "long" });
+            return dayName === sectionFilter.value.day;
+          }
+
+          return true;
+        }),
+      }));
+    }
+    return filtered;
+  }, [groupedSections, searchQuery, sectionFilter]);
 
   const tableHeaders = useMemo(
     () =>
@@ -567,227 +605,295 @@ export default function SectionList({
     );
 
     return (
-      <div >
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium min-w-36">
-            {selection.selectedCells.length} cells selected (
-            {selection.selectedCells[0]?.columnType})
+      <div className="flex-shrink-0">
+        <div className="flex items-center gap-2 h-9">
+          {/* Selection Count - Compact display */}
+          <span className="text-sm font-medium bg-gray-50/80 px-3 py-1.5 rounded-md whitespace-nowrap">
+            {selection.selectedCells.length} cells selected
           </span>
 
-          {hasMergedCells && uniqueMergeIds.size === 1 && (
+          {/* Action Buttons - Responsive design */}
+          <div className="flex items-center gap-2">
+            {/* Unmerge Button - Conditional render */}
+            {hasMergedCells && uniqueMergeIds.size === 1 && (
+              <button
+                onClick={() => {
+                  const mergeId = selection.selectedCells[0]?.mergeId;
+                  if (mergeId && selection.selectedCells[0]?.columnType) {
+                    handleUnmergeSelection(
+                      mergeId,
+                      selection.selectedCells[0].columnType
+                    );
+                  }
+                }}
+                className="inline-flex items-center px-3 py-1.5 text-sm bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors duration-200"
+              >
+                <Unlink className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Unmerge</span>
+              </button>
+            )}
+
+            {/* Merge Button */}
             <button
-              onClick={() => {
-                const mergeId = selection.selectedCells[0]?.mergeId;
-                if (mergeId && selection.selectedCells[0]?.columnType) {
-                  handleUnmergeSelection(
-                    mergeId,
-                    selection.selectedCells[0].columnType
-                  );
-                }
-              }}
-              className="px-3 py-1.5 rounded-md text-sm bg-red-600 text-white hover:bg-red-700"
+              onClick={() => setShowColorModal(true)}
+              className={`inline-flex items-center px-3 py-1.5 text-sm rounded-md transition-colors duration-200 ${
+                selection.selectedCells.length < 1
+                  ? "bg-gray-200 text-gray-500"
+                  : "bg-indigo-600 text-white hover:bg-indigo-700"
+              }`}
             >
-              Unmerge Selection
+              <Link className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">
+                {hasMergedCells ? "New Merge" : "Merge"}
+              </span>
             </button>
-          )}
 
-          <button
-            onClick={() => setShowColorModal(true)}
-            className={`px-3 py-1.5 rounded-md text-sm ${
-              selection.selectedCells.length < 1
-                ? "bg-gray-200 text-gray-500"
-                : "bg-indigo-600 text-white hover:bg-indigo-700"
-            }`}
-          >
-            {hasMergedCells ? "Merge as New" : "Merge Cells"}
-          </button>
-
-          <button
-            onClick={() =>
-              setSelection({
-                isSelecting: false,
-                selectedCells: [],
-                selectedColor: colorOptions[0].class,
-                mergeName: "",
-                mergedCellsHistory: selection.mergedCellsHistory,
-                selectedColumns: [],
-                unmergeMode: false,
-                selectedMergeId: null,
-                selectedColumnType: null
-              })
-            }
-            className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md text-sm hover:bg-gray-300"
-          >
-            Cancel
-          </button>
+            {/* Cancel Button */}
+            <button
+              onClick={() =>
+                setSelection({
+                  isSelecting: false,
+                  selectedCells: [],
+                  selectedColor: colorOptions[0].class,
+                  mergeName: "",
+                  mergedCellsHistory: selection.mergedCellsHistory,
+                  selectedColumns: [],
+                  unmergeMode: false,
+                  selectedMergeId: null,
+                  selectedColumnType: null,
+                })
+              }
+              className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md transition-colors duration-200"
+            >
+              <X className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Cancel</span>
+            </button>
+          </div>
         </div>
       </div>
     );
   };
 
-  const UnmergeIndicator = () => {
-    if (!selection.unmergeMode || !selection.selectedMergeId) return null;
-
-    const mergedCell = selection.mergedCellsHistory.find(
-      (cell) => cell.id === selection.selectedMergeId
-    );
-
-    if (!mergedCell) return null;
-
+  const ControlButtons = () => {
     return (
-      <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 z-50">
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">
-              Selected Merge: {mergedCell.mergeName}
-            </span>
-            <span className="text-xs text-gray-500">
-              {mergedCell.sectionIds.length} cells merged
-            </span>
-          </div>
+      <div className="flex items-center gap-3">
+        {/* Control Button Group with Glass Effect */}
+        <div
+          className="flex items-center gap-1 bg-white/70 backdrop-blur-sm border border-gray-100 
+          rounded-xl p-1 shadow-sm transition-all duration-300 hover:shadow-md"
+        >
+          {/* Fullscreen Button */}
           <button
-            onClick={() => {
-              if (selection.selectedColumnType) {
-                handleUnmergeSelection(
-                  mergedCell.id,
-                  selection.selectedColumnType
-                );
-              }
-            }}
-            className="px-3 py-1.5 rounded-md text-sm bg-red-600 text-white hover:bg-red-700"
+            onClick={() => setIsFullScreen((prev) => !prev)}
+            className="p-2 rounded-lg text-gray-600 hover:text-blue-600 
+              hover:bg-blue-50/80 transition-all duration-200 group relative"
+            title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           >
-            Unmerge Cells
+            {isFullScreen ? (
+              <Minimize2 className="w-4 h-4 transform group-hover:scale-110 transition-transform" />
+            ) : (
+              <Maximize2 className="w-4 h-4 transform group-hover:scale-110 transition-transform" />
+            )}
+           
           </button>
+
+          {/* Table Selection Button */}
           <button
-            onClick={() => {
+            onClick={() =>
               setSelection((prev) => ({
                 ...prev,
-                unmergeMode: false,
-                selectedMergeId: null,
-                selectedColumnType: null,
-              }));
-            }}
-            className="px-3 py-1.5 rounded-md text-sm bg-gray-200 hover:bg-gray-300"
+                isSelecting: !prev.isSelecting,
+              }))
+            }
+            className="p-2 rounded-lg transition-all duration-200 group relative"
           >
-            Cancel
+            {selection.isSelecting ? (
+              <TableProperties className="w-4 h-4 text-blue-500 transform group-hover:scale-110 transition-transform" />
+            ) : (
+              <Table className="w-4 h-4 text-gray-600 transform group-hover:scale-110 transition-transform" />
+            )}
+            {/* Active Selection Indicator */}
+            {selection.isSelecting && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
+            )}
+          </button>
+
+          {/* Settings Button with Rotation Animation */}
+          <button
+            onClick={() => setFlyoverState({
+              isOpen: true,
+              type: "header-settings",
+              data: {
+                headers,
+                onUpdateHeaders: setHeaders,
+                onApplyStyles: setTableStyles
+              }
+            })}
+            className="p-2 rounded-lg text-gray-600 hover:text-blue-600 
+              hover:bg-blue-50/80 transition-all duration-200 group relative"
+          >
+            <Settings className="w-4 h-4 transform group-hover:rotate-90 transition-transform duration-300" />
           </button>
         </div>
+
+        {/* Action Button */}
+        {selection.isSelecting ? (
+          <SelectionIndicator  />
+        ) : (
+          <button
+            onClick={() =>
+              setFlyoverState({
+                isOpen: true,
+                type: "add-section",
+                data: null,
+              })
+            }
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-violet-600 
+              text-white text-sm font-medium rounded-xl relative group overflow-hidden
+              hover:shadow-lg transform transition-all duration-300 
+              hover:scale-[1.02] hover:translate-y-[-1px]
+              active:scale-[0.98] active:translate-y-[1px]"
+          >
+            {/* Background Animation */}
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-blue-500 to-violet-500 
+              opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            />
+
+            {/* Content */}
+            <div className="relative flex items-center gap-2">
+              <PlusCircle className="w-4 h-4 transform group-hover:rotate-180 transition-transform duration-500" />
+              <span className="relative">Add Section</span>
+            </div>
+
+            {/* Shine Effect */}
+            <div
+              className="absolute inset-0 transform translate-x-[-100%] group-hover:translate-x-[100%] 
+              bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform 
+              duration-1000 ease-out"
+            />
+          </button>
+        )}
       </div>
     );
   };
 
   return (
-    <div className={`
-      ${isFullScreen 
-        ? 'fixed inset-0 z-50 bg-white flex flex-col h-screen w-screen overflow-hidden' 
-        : 'relative flex flex-col'
+    <div
+      className={`
+      ${
+        isFullScreen
+          ? "fixed inset-0 z-50 bg-white flex flex-col h-screen w-screen overflow-hidden"
+          : "relative flex flex-col"
       }
-    `}>
+    `}
+    >
       {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b z-20">
+      <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 mb-6">
         <div className="p-4">
           {activeTrack && (
-            <div className="flex flex-col md:flex-row flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-violet-50/40 rounded-xl px-6 py-4 shadow-sm border border-gray-100">
-              <div className="flex flex-col md:flex-row items-center gap-4">
-                <div className="text-lg font-bold text-blue-700 flex-shrink-0">
-                  Current Track:{" "}
-                  <span className="text-xl font-light text-blue-800">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              {/* Track Info - Left */}
+              <div className="flex items-center gap-4">
+                <div
+                  className="h-10 min-w-36 px-2 rounded-xl bg-gradient-to-tr from-blue-500 to-violet-500 
+                  flex items-center justify-center transform transition-transform duration-300 hover:scale-110"
+                >
+                  <span className="text-lg font-bold text-white">
                     {activeTrack.name}
                   </span>
                 </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-5">
-                <button
-                  onClick={() => setIsFullScreen((prev) => !prev)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
-                >
-                  {isFullScreen ? (
-                    <>
-                      <Minimize2 className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        Exit Full Screen
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Maximize2 className="w-4 h-4" />
-                      <span className="text-sm font-medium">Full Screen</span>
-                    </>
-                  )}
-                </button>
+                
 
-                {selection.isSelecting ? (
-                  <TableProperties
-                    className="w-5 h-5 cursor-pointer"
-                    onClick={() =>
-                      setSelection((prev) => ({
-                        ...prev,
-                        isSelecting: !prev.isSelecting,
-                      }))
-                    }
-                  />
-                ) : (
-                  <Table
-                    className="w-5 h-5 cursor-pointer"
-                    onClick={() =>
-                      setSelection((prev) => ({
-                        ...prev,
-                        isSelecting: !prev.isSelecting,
-                      }))
-                    }
-                  />
-                )}
-                <Settings
-                  className="w-5 h-5 cursor-pointer"
-                  onClick={() => setShowHeaderSettings(true)}
-                />
-                {selection.isSelecting ? (
-                 <>
-                  <SelectionIndicator />
-                  {selection.unmergeMode ? <UnmergeIndicator /> : null}
-                  </>
-                  
-               
-                ) : (
-                  
-                   <button
-                    onClick={() =>
-                      setFlyoverState({
-                        isOpen: true,
-                        type: "add-section",
-                        data: null,
-                      })
-                    }
-                    className="flex items-center gap-1.5 px-4 py-2 text-gray-50 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
-                  >
-                    <PlusCircle className="w-5 h-5" />
-                    <span className="text-sm font-medium">Add Section</span>
-                  </button>
-                )}
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
+                  <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
+                    <Clock className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm text-gray-600">
+                      {new Date(activeTrack.startDate).toLocaleDateString()} -
+                      {new Date(activeTrack.endDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-violet-50 px-3 py-1.5 rounded-lg">
+                    <Layers className="w-4 h-4 text-violet-500" />
+                    <span className="text-sm text-gray-600">
+                      {activeTrack.sections.length} sections
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions - Right */}
+              <div className="flex items-center gap-3">
+                <ControlButtons />
               </div>
             </div>
           )}
         </div>
 
-        {/* Search Bar */}
-        <div className="px-4 py-3 bg-gray-50/80 backdrop-blur-sm">
-          <div className="mx-auto relative flex items-center justify-between gap-4">
-            <input
-              type="text"
-              placeholder="Search sections..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-10 top-2.5 text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
+        {/* Search and Filters */}
+        <div className="border-t border-gray-100 relative">
+          <div className="p-4 bg-gradient-to-r from-gray-50/80 to-white/60 backdrop-blur-sm">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              {/* Calendar Filter */}
+              <div className="w-full sm:w-auto">
+                <div className="relative transform transition-all duration-200 hover:scale-[1.02]">
+                  <SectionCalendarFilter
+                    sections={sections}
+                    onFilterChange={setSectionFilter}
+                    activeFilter={sectionFilter}
+                  />
+                  {/* Improved Highlight Effect */}
+                  <div 
+                    className="absolute inset-0 rounded-lg pointer-events-none"
+                    style={{
+                      background: 'linear-gradient(90deg, rgba(96, 165, 250, 0) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(96, 165, 250, 0) 100%)',
+                      opacity: 0,
+                      transition: 'opacity 300ms ease-in-out'
+                    }}
+                  />
+                </div>
+                
+               
+              </div>
+
+              {/* Enhanced Search Bar */}
+              <div className="relative flex-1 group">
+                <div className="relative transform transition-all duration-200 group-hover:scale-[1.02]">
+                  <input
+                    type="text"
+                    placeholder="Search sections..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-10 py-2.5 text-sm bg-white rounded-xl border border-gray-200 
+                      focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 
+                      placeholder-gray-400 transition-all duration-200 group-hover:shadow-md"
+                  />
+                  <Search
+                    className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 
+                    transition-colors duration-200 group-hover:text-blue-500"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full 
+                        hover:bg-gray-100 text-gray-400 hover:text-gray-600 
+                        transition-all duration-200 hover:rotate-90"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {searchQuery && (
+                  <div className="absolute right-0 mt-1 text-xs text-gray-500">
+                    {filteredSections.reduce(
+                      (count, group) => count + group.sections.length,
+                      0
+                    )}{" "}
+                    results found
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -807,7 +913,9 @@ export default function SectionList({
                       <SectionRow
                         key={section.id}
                         section={section}
-                        showSpeakerRole={headers.find((h) => h.type === "speaker")?.isVisible}
+                        showSpeakerRole={
+                          headers.find((h) => h.type === "speaker")?.isVisible
+                        }
                         onAddSubsection={onAddSubsection}
                         onUpdateSection={onUpdateSection}
                         selection={selection}
@@ -823,17 +931,6 @@ export default function SectionList({
         </div>
       </div>
 
-      {/* Modals */}
-      {showHeaderSettings && (
-        <HeaderSettingsModal
-          isOpen={showHeaderSettings}
-          onClose={() => setShowHeaderSettings(false)}
-          headers={headers}
-          onUpdateHeaders={setHeaders}
-          onApplyStyles={setTableStyles}
-        />
-      )}
-
       <ColorSelectionModal
         isOpen={showColorModal}
         onClose={() => setShowColorModal(false)}
@@ -842,3 +939,5 @@ export default function SectionList({
     </div>
   );
 }
+
+export default SectionList;

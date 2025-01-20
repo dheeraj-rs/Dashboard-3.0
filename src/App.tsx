@@ -1,14 +1,16 @@
 import { useState, lazy, Suspense, useEffect } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
-import { Track, Section, FlyoverState, Participant } from './types/scheduler';
+import { Track, Section, FlyoverState, Participant } from "./types/scheduler";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { Calendar, Users, Settings, Layout } from "lucide-react";
 import DashboardLayout from "./layouts/DashboardLayout";
+import { Toaster } from "react-hot-toast";
 
 const TrackList = lazy(() => import("./components/Track/TrackList"));
 const SectionList = lazy(() => import("./components/Section/SectionList"));
 import FlyoverPanel from "./components/Modal/FlyoverPanel";
 import ParticipantsPage from "./components/Participants/ParticipantsPage";
+import { showToast } from "./components/Modal/CustomToast";
 
 function App() {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -35,16 +37,23 @@ function App() {
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  const handleAddTrack = (trackData: Partial<Track>) => {
-    const newTrack: Track = {
-      id: crypto.randomUUID(),
-      name: trackData.name || `Track ${tracks.length + 1}`,
-      startDate: trackData.startDate || new Date().toISOString(), // Default to current date and time
-      endDate: trackData.endDate || new Date().toISOString(), // Default to current date and time
-      sections: [],
-    };
-    setTracks((prev) => [...prev, newTrack]);
-    setSelectedTrackId(newTrack.id);
+  const handleAddTrack = (trackData: Partial<Track>): boolean => {
+    try {
+      const newTrack: Track = {
+        id: crypto.randomUUID(),
+        name: trackData.name || '',
+        startDate: trackData.startDate || new Date().toISOString(),
+        endDate: trackData.endDate || new Date().toISOString(),
+        sections: trackData.sections || []
+      };
+
+      setTracks(prev => [...prev, newTrack]);
+      showToast.success("Track created successfully");
+      return true;
+    } catch (error) {
+      showToast.error("Failed to create track");
+      return false;
+    }
   };
 
   const handleAddSection = (trackId: string, sectionData: Partial<Section>) => {
@@ -62,25 +71,25 @@ function App() {
           mergedFields: sectionData.mergedFields || {
             speaker: {
               isMerged: false,
-              color: '',
-              mergeId: '',
-              mergeName: '',
-              value: null
+              color: "",
+              mergeId: "",
+              mergeName: "",
+              value: null,
             },
             role: {
               isMerged: false,
-              color: '',
-              mergeId: '',
-              mergeName: '',
-              value: null
+              color: "",
+              mergeId: "",
+              mergeName: "",
+              value: null,
             },
             timeSlot: {
               isMerged: false,
-              color: '',
-              mergeId: '',
-              mergeName: '',
-              value: null
-            }
+              color: "",
+              mergeId: "",
+              mergeName: "",
+              value: null,
+            },
           },
         };
 
@@ -111,25 +120,25 @@ function App() {
       mergedFields: sectionData.mergedFields || {
         speaker: {
           isMerged: false,
-          color: '',
-          mergeId: '',
-          mergeName: '',
-          value: null
+          color: "",
+          mergeId: "",
+          mergeName: "",
+          value: null,
         },
         role: {
           isMerged: false,
-          color: '',
-          mergeId: '',
-          mergeName: '',
-          value: null
+          color: "",
+          mergeId: "",
+          mergeName: "",
+          value: null,
         },
         timeSlot: {
           isMerged: false,
-          color: '',
-          mergeId: '',
-          mergeName: '',
-          value: null
-        }
+          color: "",
+          mergeId: "",
+          mergeName: "",
+          value: null,
+        },
       },
     };
   };
@@ -235,28 +244,39 @@ function App() {
       }
       return track;
     });
-
     setTracks(updatedTracks);
   };
 
-  const handleUpdateTrack = (updates: Partial<Track>) => {
-    if (!updates.id) {
-      console.warn("No track ID provided for update");
-      return;
+  const handleUpdateTrack = (trackData: Partial<Track>): boolean => {
+    try {
+      setTracks(prev => prev.map(track => 
+        track.id === trackData.id ? { ...track, ...trackData } : track
+      ));
+      showToast.success("Track updated successfully");
+      return true;
+    } catch (error) {
+      showToast.error("Failed to update track");
+      return false;
     }
+  };
 
-    setTracks((prev) =>
-      prev.map((track) => {
-        if (track.id === updates.id) {
-          return {
-            ...track,
-            ...updates,
-            sections: track.sections,
-          };
+  const handleDeleteTrack = (trackId: string) => {
+    try {
+      if (selectedTrackId === trackId) {
+        const remainingTracks = tracks.filter((track) => track.id !== trackId);
+        if (remainingTracks.length > 0) {
+          setSelectedTrackId(remainingTracks[0].id);
+        } else {
+          setSelectedTrackId(null);
         }
-        return track;
-      })
-    );
+      }
+
+      setTracks((prev) => prev.filter((track) => track.id !== trackId));
+      showToast.success("Track deleted successfully");
+    } catch (error) {
+      showToast.error("Failed to delete track");
+      console.error("Error deleting track:", error);
+    }
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -325,14 +345,17 @@ function App() {
       role: participantData.role || "",
       email: participantData.email || "",
       organization: participantData.organization || "",
-      sessions: participantData.sessions || []
+      sessions: participantData.sessions || [],
     };
-    setParticipants(prev => [...prev, newParticipant]);
+    setParticipants((prev) => [...prev, newParticipant]);
   };
 
-  const handleUpdateParticipant = (participantId: string, updates: Partial<Participant>) => {
-    setParticipants(prev =>
-      prev.map(participant =>
+  const handleUpdateParticipant = (
+    participantId: string,
+    updates: Partial<Participant>
+  ) => {
+    setParticipants((prev) =>
+      prev.map((participant) =>
         participant.id === participantId
           ? { ...participant, ...updates }
           : participant
@@ -341,7 +364,7 @@ function App() {
   };
 
   const handleDeleteParticipant = (participantId: string) => {
-    setParticipants(prev => prev.filter(p => p.id !== participantId));
+    setParticipants((prev) => prev.filter((p) => p.id !== participantId));
   };
 
   return (
@@ -355,47 +378,48 @@ function App() {
       >
         <ErrorBoundary>
           <Suspense fallback={<div>Loading...</div>}>
-          {activeTab === "schedule" && (
-  <div className="space-y-8">
-    <Droppable droppableId="tracks" type="track">
-      {(provided) => (
-        <div {...provided.droppableProps} ref={provided.innerRef}>
-          <TrackList
-            tracks={tracks}
-            onSelectTrack={setSelectedTrackId}
-            selectedTrackId={selectedTrackId}
-            setFlyoverState={setFlyoverState}
-          />
-          {provided.placeholder}
-        </div>
-      )}
-    </Droppable>
-    {selectedTrack && (
-      <Droppable droppableId={selectedTrack.id} type="section">
-        {(provided) => (
-          <div {...provided.droppableProps} ref={provided.innerRef}>
-            <SectionList
-              sections={selectedTrack.sections}
-              onUpdateSection={handleUpdateSection}
-              activeTrack={selectedTrack}
-              setFlyoverState={setFlyoverState}
-            />
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    )}
-  </div>
-)}
-{activeTab === "participants" && (
-  <ParticipantsPage 
-    setFlyoverState={setFlyoverState}
-    participants={participants}
-    onAddParticipant={handleAddParticipant}
-    onUpdateParticipant={handleUpdateParticipant}
-    onDeleteParticipant={handleDeleteParticipant}
-  />
-)}
+            {activeTab === "schedule" && (
+              <div className="space-y-8">
+                <Droppable droppableId="tracks" type="track">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                      <TrackList
+                        tracks={tracks}
+                        onSelectTrack={setSelectedTrackId}
+                        selectedTrackId={selectedTrackId}
+                        setFlyoverState={setFlyoverState}
+                        onDeleteTrack={handleDeleteTrack}
+                      />
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+                {selectedTrack && (
+                  <Droppable droppableId={selectedTrack.id} type="section">
+                    {(provided) => (
+                      <div {...provided.droppableProps} ref={provided.innerRef}>
+                        <SectionList
+                          sections={selectedTrack.sections}
+                          onUpdateSection={handleUpdateSection}
+                          activeTrack={selectedTrack}
+                          setFlyoverState={setFlyoverState}
+                        />
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                )}
+              </div>
+            )}
+            {activeTab === "participants" && (
+              <ParticipantsPage
+                setFlyoverState={setFlyoverState}
+                participants={participants}
+                onAddParticipant={handleAddParticipant}
+                onUpdateParticipant={handleUpdateParticipant}
+                onDeleteParticipant={handleDeleteParticipant}
+              />
+            )}
           </Suspense>
         </ErrorBoundary>
         <FlyoverPanel
@@ -408,8 +432,22 @@ function App() {
           handleSubmitSection={handleSubmitSection}
           handleAddParticipant={handleAddParticipant}
           handleUpdateParticipant={handleUpdateParticipant}
+          tracks={tracks}
         />
       </DashboardLayout>
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "transparent",
+            padding: "12px",
+            margin: "0px",
+            boxShadow: "none",
+            maxWidth: "420px",
+          },
+        }}
+      />
     </DragDropContext>
   );
 }
