@@ -36,11 +36,6 @@ export const validateTrackName = (name: string, existingTracks: Track[], current
     return "Track name is required";
   }
 
-  // Check minimum length
-  if (name.trim().length < 3) {
-    return "Track name must be at least 3 characters";
-  }
-
   // Check maximum length
   if (name.trim().length > 50) {
     return "Track name must not exceed 50 characters";
