@@ -105,18 +105,13 @@ export default function TrackForm({ onSubmit, initialData, tracks }: TrackFormPr
       return;
     }
 
-    const success = onSubmit({
+   onSubmit({
       id: initialData?.id || crypto.randomUUID(),
       name,
       startDate,
       endDate,
       sections: initialData?.sections || [],
     });
-
-    // Only show success message and close flyover if track was actually created
-    if (success) {
-      showToast.success(initialData ? 'Track updated successfully' : 'Track created successfully');
-    }
   };
 
   return (

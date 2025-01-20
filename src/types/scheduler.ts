@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
+import { Toast } from 'react-hot-toast';
 
 const colorOptions = [
   { name: "Blue", class: "bg-blue-100", hover: "hover:bg-blue-200" },
@@ -32,8 +33,9 @@ export interface Section {
   readonly id: string;
   name: string;
   timeSlot: TimeSlot;
-  speaker: string | boolean;
+  speaker: string;
   role: string;
+  sectionTypeId?: string;
   subsections: Section[];
   mergedFields?: Partial<MergedFields>;
   deleted?: boolean;
@@ -77,15 +79,9 @@ export interface TrackFormProps {
 
 export interface SectionListProps {
   sections: Section[];
-  onAddSection?: (sectionData: Partial<Section>) => void;
   onUpdateSection: (sectionId: string, updates: Partial<Section>) => void;
-  onAddSubsection?: (sectionId: string) => void;
-  activeTrack?: Track;
-  setFlyoverState: (state: {
-    isOpen: boolean;
-    type: 'add-track' | 'edit-track' | 'add-section' | 'edit-section' | 'add-subsection' | 'header-settings';
-    data: any;
-  }) => void;
+  activeTrack: Track | null;
+  setFlyoverState: (state: FlyoverState) => void;
 }
 
 export interface SectionRowProps {
@@ -100,11 +96,8 @@ export interface SectionRowProps {
   onUpdateSection: (sectionId: string, updates: Partial<Section>) => void;
   selection?: SelectionState;
   onSelect?: (sectionId: string, columnType: keyof MergedFields) => void;
-  setFlyoverState: (state: {
-    isOpen: boolean;
-    type: 'add-track' | 'edit-track' | 'add-section' | 'edit-section' | 'add-subsection';
-    data: any;
-  }) => void;
+  setFlyoverState: (state: FlyoverState) => void;
+  activeTrack: Track | null;
 }
 
 export interface TableHeader {
@@ -123,9 +116,10 @@ export interface SectionItemProps {
 }
 
 export interface SectionFormProps {
-  onSubmit: (section: Partial<Section>) => void;
+  onSubmit: (formData: Partial<Section>) => void;
   initialData?: Section;
   isSubsection?: boolean;
+  sectionTypes?: SectionManagementItem[];
 }
 
 export interface ModalProps {
@@ -169,9 +163,10 @@ export interface ColorSelectionModalProps {
 export interface FlyoverState {
   isOpen: boolean;
   type: 'add-track' | 'edit-track' | 'add-section' | 'edit-section' | 'add-subsection' | 
-        'track-settings' | 'header-settings' | 'add-participant' | 'edit-participant' |
-        'add-section-item' | 'edit-section-item' | 'add-speaker' | 'edit-speaker' |
-        'add-role' | 'edit-role' | 'add-section-type' | 'edit-section-type' | '' | null;
+        'edit-subsection' | 'track-settings' | 'header-settings' | 'add-participant' | 
+        'edit-participant' | 'add-section-item' | 'edit-section-item' | 'add-speaker' | 
+        'edit-speaker' | 'add-role' | 'edit-role' | 'add-section-type' | 'edit-section-type' | 
+        '' | null;
   data: any;
 }
 export interface FlyoverPanelProps {
@@ -180,13 +175,15 @@ export interface FlyoverPanelProps {
   setFlyoverState: (state: FlyoverState) => void;
   handleUpdateTrack: (trackData: Partial<Track>) => boolean;
   handleAddTrack: (trackData: Partial<Track>) => boolean;
-  handleUpdateSection: (id: string, updates: Partial<Section>) => void;
+  handleUpdateSection: (sectionId: string, updates: Partial<Section>) => void;
   handleSubmitSection: (sectionData: Partial<Section>) => void;
-  handleAddParticipant: (participantData: Partial<Participant>) => void;
+  handleAddParticipant: (participant: Partial<Participant>) => void;
   handleUpdateParticipant: (id: string, updates: Partial<Participant>) => void;
   handleAddManagementItem: (type: string, item: Partial<DataManagementItem>) => void;
   handleUpdateManagementItem: (type: string, id: string, updates: Partial<DataManagementItem>) => void;
   tracks: Track[];
+  managementData: DataManagementState;
+  showToast?: { success: (msg: string) => void; error: (msg: string) => void; };
 }
 
 
@@ -308,32 +305,6 @@ export interface SectionCalendarFilterProps {
   } | null;
 }
 
-export interface SectionTypeData {
-  id: string;
-  name: string;
-  type: 'section';
-  sectionType: 'lunch' | 'break' | 'introduction' | 'program' | 'other';
-  maxParticipants?: number;
-  location?: string;
-  timeSlot?: {
-    start: string;
-    end: string;
-  };
-  description?: string;
-  color?: string;
-}
-
-export interface SectionManagementItem extends DataManagementItem {
-  type: 'section';
-  sectionType: 'lunch' | 'break' | 'introduction' | 'program' | 'other';
-  maxParticipants?: number;
-  location?: string;
-  timeSlot?: {
-    start: string;
-    end?: string;
-  };
-}
-
 export interface SpeakerManagementItem extends DataManagementItem {
   type: 'speaker';
   email: string;
@@ -359,8 +330,89 @@ export interface RoleManagementItem extends DataManagementItem {
 export interface DataManagementItem {
   id: string;
   name: string;
-  type: 'section' | 'speaker' | 'role';
+  type: 'section' | 'speaker' | 'role' | 'sectionstypes';
   color?: string;
   description?: string;
 }
 
+export interface DataManagementState {
+  sections: DataManagementItem[];
+  speakers: SpeakerManagementItem[];
+  roles: RoleManagementItem[];
+  sectionstypes: SectionManagementItem[];
+  [key: string]: DataManagementItem[] | SpeakerManagementItem[] | RoleManagementItem[] | SectionManagementItem[];
+}
+
+export interface DataManagementPageProps {
+  setFlyoverState: (state: FlyoverState) => void;
+  onAddItem: (type: string, item: Partial<DataManagementItem>) => void;
+  onUpdateItem: (type: string, id: string, updates: Partial<DataManagementItem>) => void;
+  onDeleteItem: (type: string, id: string) => void;
+  data: DataManagementState;
+}
+
+export interface SectionManagementItem extends DataManagementItem {
+  type: 'sectionstypes';
+  sectionType?: 'lunch' | 'break' | 'introduction' | 'program' | 'other';
+  maxParticipants?: number;
+  location?: string;
+  timeSlot?: {
+    start: string;
+    end: string;
+  };
+}
+
+
+export interface CalendarFilterProps {
+  tracks: Track[];
+  onFilterChange: (filter: { type: 'day' | 'month' | 'year', value: string } | null) => void;
+  activeFilter: { type: 'day' | 'month' | 'year', value: string } | null;
+}
+
+
+export interface ExtendedSectionFormProps extends SectionFormProps {
+  sectionTypes: SectionManagementItem[];
+  speakers: SpeakerManagementItem[];
+  roles: RoleManagementItem[];
+  setFlyoverState: (state: FlyoverState) => void;
+}
+
+export interface DeleteConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+}
+
+export interface ToastProps {
+  t: Toast;
+  message: string;
+  type?: 'success' | 'error' | 'info';
+}
+
+export interface AlertProps {
+  children: React.ReactNode;
+  className?: string;
+  variant?: 'default' | 'destructive';
+}
+
+export interface SpeakerFormProps {
+  initialData?: SpeakerManagementItem;
+  onSubmit: (data: Partial<SpeakerManagementItem>) => void;
+}
+
+export interface RoleFormProps {
+  initialData?: RoleManagementItem;
+  onSubmit: (data: Partial<RoleManagementItem>) => void;
+}
+
+export interface SectionTypeFormProps {
+  initialData?: SectionManagementItem;
+  onSubmit: (data: Partial<SectionManagementItem>) => void;
+}
+
+export interface RoleFormProps {
+  initialData?: RoleManagementItem;
+  onSubmit: (data: Partial<RoleManagementItem>) => void;
+}

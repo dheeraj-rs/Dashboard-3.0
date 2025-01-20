@@ -1,31 +1,16 @@
 import { useState, lazy, Suspense, useEffect } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
-import { Track, Section, FlyoverState, Participant, SectionManagementItem, SpeakerManagementItem, RoleManagementItem } from "./types/scheduler";
-import ErrorBoundary from "./components/ErrorBoundary";
 import { Calendar, Users, Settings, Layout, Database } from "lucide-react";
-import DashboardLayout from "./layouts/DashboardLayout";
 import { Toaster } from "react-hot-toast";
-import DataManagementPage from "./components/DataManagement/DataManagementPage";
-
+import { Track, Section, FlyoverState, Participant, SectionManagementItem, SpeakerManagementItem, RoleManagementItem, DataManagementItem, DataManagementState } from "./types/scheduler";
+import { showToast } from "./components/Modal/CustomToast";
+import DashboardLayout from "./layouts/DashboardLayout";
+import ErrorBoundary from "./components/ErrorBoundary";
 const TrackList = lazy(() => import("./components/Track/TrackList"));
 const SectionList = lazy(() => import("./components/Section/SectionList"));
-import FlyoverPanel from "./components/Modal/FlyoverPanel";
-import ParticipantsPage from "./components/Participants/ParticipantsPage";
-import { showToast } from "./components/Modal/CustomToast";
-
-export interface DataManagementItem {
-  id: string;
-  name: string;
-  type: 'section' | 'speaker' | 'role';
-  color?: string;
-  description?: string;
-}
-
-export interface DataManagementState {
-  sections: DataManagementItem[];
-  speakers: DataManagementItem[];
-  roles: DataManagementItem[];
-}
+const FlyoverPanel = lazy(() => import("./components/Modal/FlyoverPanel"));
+const ParticipantsPage = lazy(() => import("./components/Participants/ParticipantsPage"));
+const DataManagementPage = lazy(() => import("./components/DataManagement/DataManagementPage"));    
 
 function App() {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -41,9 +26,9 @@ function App() {
   const [managementData, setManagementData] = useState<DataManagementState>({
     sections: [],
     speakers: [],
-    roles: []
+    roles: [],
+    sectionstypes: []
   });
-
   const navigationItems = [
     { id: "schedule", label: "Schedule", icon: Calendar },
     { id: "participants", label: "Participants", icon: Users },
@@ -62,6 +47,7 @@ function App() {
         sections: trackData.sections || []
       };
       setTracks(prev => [...prev, newTrack]);
+      showToast.success("Track added successfully");
       return true;
     } catch (error) {
       showToast.error("Failed to create track");
@@ -74,6 +60,7 @@ function App() {
       setTracks(prev => prev.map(track => 
         track.id === trackData.id ? { ...track, ...trackData } : track
       ));
+      showToast.success("Track updated successfully");
       return true;
     } catch (error) {
       showToast.error("Failed to update track");
@@ -96,50 +83,54 @@ function App() {
       showToast.success("Track deleted successfully");
     } catch (error) {
       showToast.error("Failed to delete track");
-      console.error("Error deleting track:", error);
     }
   };
 
   const handleAddSection = (trackId: string, sectionData: Partial<Section>) => {
-    setTracks((prev) =>
-      prev.map((track) => {
-        if (track.id !== trackId) return track;
+    try {
+      setTracks((prev) =>
+        prev.map((track) => {
+          if (track.id !== trackId) return track;
 
-        const newSection: Section = {
-          id: crypto.randomUUID(),
-          name: sectionData.name || `Section ${track.sections.length + 1}`,
-          timeSlot: sectionData.timeSlot || { start: "09:00", end: "10:00" },
-          speaker: sectionData.speaker || "",
-          role: sectionData.role || "",
-          subsections: [],
-          mergedFields: sectionData.mergedFields || {
-            speaker: {
-              isMerged: false,
-              color: "",
-              mergeId: "",
-              mergeName: "",
-              value: null,
+          const newSection: Section = {
+            id: crypto.randomUUID(),
+            name: sectionData.name || `Section ${track.sections.length + 1}`,
+            timeSlot: sectionData.timeSlot || { start: "09:00", end: "10:00" },
+            speaker: sectionData.speaker || "",
+            role: sectionData.role || "",
+            subsections: [],
+            mergedFields: sectionData.mergedFields || {
+              speaker: {
+                isMerged: false,
+                color: "",
+                mergeId: "",
+                mergeName: "",
+                value: null,
+              },
+              role: {
+                isMerged: false,
+                color: "",
+                mergeId: "",
+                mergeName: "",
+                value: null,
+              },
+              timeSlot: {
+                isMerged: false,
+                color: "",
+                mergeId: "",
+                mergeName: "",
+                value: null,
+              },
             },
-            role: {
-              isMerged: false,
-              color: "",
-              mergeId: "",
-              mergeName: "",
-              value: null,
-            },
-            timeSlot: {
-              isMerged: false,
-              color: "",
-              mergeId: "",
-              mergeName: "",
-              value: null,
-            },
-          },
-        };
+          };
 
-        return { ...track, sections: [...track.sections, newSection] };
-      })
-    );
+          return { ...track, sections: [...track.sections, newSection] };
+        })
+      );
+      showToast.success("Section added successfully");
+    } catch (error) {
+      showToast.error("Failed to add section");
+    }
   };
 
   const createNewSubsection = (
@@ -147,41 +138,34 @@ function App() {
     sectionData: Partial<Section>
   ): Section => {
     return {
-      id: `subsection-${Date.now()}`,
-      name:
-        sectionData.name ||
-        `Subsection ${parentSection.subsections.length + 1}`,
-      timeSlot: sectionData.mergedFields?.timeSlot
-        ? parentSection.timeSlot
-        : sectionData.timeSlot || { start: "09:00", end: "10:00" },
-      speaker: sectionData.mergedFields?.speaker
-        ? parentSection.speaker
-        : sectionData.speaker || "",
-      role: sectionData.mergedFields?.role
-        ? parentSection.role
-        : sectionData.role || "",
+      id: crypto.randomUUID(),
+      name: sectionData.name || `Subsection ${parentSection.subsections.length + 1}`,
+      timeSlot: sectionData.timeSlot || parentSection.timeSlot,
+      speaker: sectionData.speaker || parentSection.speaker,
+      role: sectionData.role || parentSection.role,
+      sectionTypeId: sectionData.sectionTypeId || parentSection.sectionTypeId,
       subsections: [],
-      mergedFields: sectionData.mergedFields || {
+      mergedFields: {
         speaker: {
-          isMerged: false,
-          color: "",
-          mergeId: "",
-          mergeName: "",
-          value: null,
+          isMerged: sectionData.mergedFields?.speaker?.isMerged || false,
+          color: sectionData.mergedFields?.speaker?.color || "",
+          mergeId: sectionData.mergedFields?.speaker?.mergeId || "",
+          mergeName: sectionData.mergedFields?.speaker?.mergeName || "",
+          value: sectionData.mergedFields?.speaker?.value || null,
         },
         role: {
-          isMerged: false,
-          color: "",
-          mergeId: "",
-          mergeName: "",
-          value: null,
+          isMerged: sectionData.mergedFields?.role?.isMerged || false,
+          color: sectionData.mergedFields?.role?.color || "",
+          mergeId: sectionData.mergedFields?.role?.mergeId || "",
+          mergeName: sectionData.mergedFields?.role?.mergeName || "",
+          value: sectionData.mergedFields?.role?.value || null,
         },
         timeSlot: {
-          isMerged: false,
-          color: "",
-          mergeId: "",
-          mergeName: "",
-          value: null,
+          isMerged: sectionData.mergedFields?.timeSlot?.isMerged || false,
+          color: sectionData.mergedFields?.timeSlot?.color || "",
+          mergeId: sectionData.mergedFields?.timeSlot?.mergeId || "",
+          mergeName: sectionData.mergedFields?.timeSlot?.mergeName || "",
+          value: sectionData.mergedFields?.timeSlot?.value || null,
         },
       },
     };
@@ -190,105 +174,134 @@ function App() {
   const handleSubmitSection = (sectionData: Partial<Section>) => {
     if (!selectedTrackId) return;
 
-    if (flyoverState.type === "add-subsection") {
-      setTracks(
-        tracks.map((track) => {
-          if (track.id !== selectedTrackId) return track;
+    try {
+      // Handle section update
+      if (sectionData.id) {
+        handleUpdateSection(sectionData.id, sectionData);
+        showToast.success("Section updated successfully");
+        return;
+      }
 
-          const addSubsectionToSection = (sections: Section[]): Section[] => {
-            return sections.map((section) => {
-              if (section.id === flyoverState.data.parentId) {
-                const newSubsection = createNewSubsection(section, sectionData);
-                return {
-                  ...section,
-                  subsections: [...section.subsections, newSubsection],
-                };
-              }
-              if (section.subsections.length > 0) {
-                return {
-                  ...section,
-                  subsections: addSubsectionToSection(section.subsections),
-                };
-              }
-              return section;
-            });
-          };
+      // Handle new subsection
+      if (flyoverState.type === "add-subsection" && flyoverState.data?.parentId) {
+        setTracks(prev => 
+          prev.map(track => {
+            if (track.id !== selectedTrackId) return track;
 
-          return {
-            ...track,
-            sections: addSubsectionToSection(track.sections),
-          };
-        })
-      );
-    } else {
-      handleAddSection(selectedTrackId, sectionData);
+            const addSubsectionToSection = (sections: Section[]): Section[] => {
+              return sections.map(section => {
+                if (section.id === flyoverState.data.parentId) {
+                  const newSubsection = createNewSubsection(section, sectionData);
+                  return {
+                    ...section,
+                    subsections: [...section.subsections, newSubsection]
+                  };
+                }
+                
+                if (section.subsections?.length > 0) {
+                  return {
+                    ...section,
+                    subsections: addSubsectionToSection(section.subsections)
+                  };
+                }
+                
+                return section;
+              });
+            };
+
+            return {
+              ...track,
+              sections: addSubsectionToSection(track.sections)
+            };
+          })
+        );
+        showToast.success("Subsection added successfully");
+      } else {
+        handleAddSection(selectedTrackId, sectionData);
+      }
+    } catch (error) {
+      showToast.error("Failed to save section");
     }
   };
 
-  const handleUpdateSection = (
-    sectionId: string,
-    updates: Partial<Section>
-  ) => {
+  const handleUpdateSection = (sectionId: string, updates: Partial<Section>) => {
     if (!selectedTrackId) {
       console.warn("No track selected for update");
       return;
     }
 
-    const updatedTracks = tracks.map((track) => {
-      if (track.id === selectedTrackId) {
+    try {
+      setTracks((prev) => prev.map((track) => {
+        if (track.id !== selectedTrackId) return track;
+
         const updateSectionRecursively = (
           sections: Section[],
           targetId: string,
           updates: Partial<Section>
         ): Section[] => {
-          return sections
-            .map((section) => {
-              if (section.id === targetId) {
-                return updates.deleted
-                  ? null
-                  : {
-                      ...section,
-                      ...updates,
-                      subsections: section.subsections,
-                      mergedFields: {
-                        ...section.mergedFields,
-                        ...updates.mergedFields,
-                      },
-                    };
-              }
-
+          // Handle deletion
+          if (updates.deleted) {
+            const filtered = sections.filter(section => {
+              // Check if current section should be deleted
+              if (section.id === targetId) return false;
+              
+              // If section has subsections, recursively filter them
               if (section.subsections?.length) {
-                const updatedSubsections = updateSectionRecursively(
+                section.subsections = updateSectionRecursively(
                   section.subsections,
                   targetId,
                   updates
                 );
-                if (updatedSubsections !== section.subsections) {
-                  return { ...section, subsections: updatedSubsections };
-                }
               }
-              return section;
-            })
-            .filter((section): section is Section => section !== null);
+              return true;
+            });
+            return filtered;
+          }
+
+          // Handle updates
+          return sections.map(section => {
+            if (section.id === targetId) {
+              return {
+                ...section,
+                ...updates,
+                subsections: updates.subsections || section.subsections || [],
+                mergedFields: {
+                  ...section.mergedFields,
+                  ...(updates.mergedFields || {}),
+                },
+              };
+            }
+
+            if (section.subsections?.length) {
+              return {
+                ...section,
+                subsections: updateSectionRecursively(
+                  section.subsections,
+                  targetId,
+                  updates
+                ),
+              };
+            }
+
+            return section;
+          });
         };
 
-        const updatedSections = updateSectionRecursively(
-          track.sections,
-          sectionId,
-          updates
-        );
-        if (updatedSections === track.sections) {
-          console.warn(`Section with ID ${sectionId} not found`);
+        const updatedTrack = {
+          ...track,
+          sections: updateSectionRecursively(track.sections, sectionId, updates),
+        };
+
+        // Show success message after the update is complete
+        if (updates.deleted) {
+          showToast.success("Section deleted successfully");
         }
 
-        return {
-          ...track,
-          sections: updatedSections,
-        };
-      }
-      return track;
-    });
-    setTracks(updatedTracks);
+        return updatedTrack;
+      }));
+    } catch (error) {
+      showToast.error("Failed to update section");
+    }
   };
 
   const handleAddParticipant = (participantData: Partial<Participant>) => {
@@ -366,10 +379,12 @@ function App() {
         return "Edit Track";
       case "add-section":
         return "Add New Section";
-      case "add-subsection":
-        return "Add Subsection";
       case "edit-section":
         return "Edit Section";
+      case "add-subsection":
+        return "Add New Subsection";
+      case "edit-subsection":
+        return "Edit Subsection";
       case "add-participant":
         return "Add New Participant";
       case "edit-participant":
@@ -539,6 +554,7 @@ function App() {
           handleAddManagementItem={handleAddManagementItem}
           handleUpdateManagementItem={handleUpdateManagementItem}
           tracks={tracks}
+          managementData={managementData}
         />
       </DashboardLayout>
       <Toaster

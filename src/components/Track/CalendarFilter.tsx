@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import { Calendar, X } from 'lucide-react';
-import { Track } from '../../types/scheduler';
-
-interface CalendarFilterProps {
-  tracks: Track[];
-  onFilterChange: (filter: { type: 'day' | 'month' | 'year', value: string } | null) => void;
-  activeFilter: { type: 'day' | 'month' | 'year', value: string } | null;
-}
+import { CalendarFilterProps } from '../../types/scheduler';
 
 export default function CalendarFilter({ tracks, onFilterChange, activeFilter }: CalendarFilterProps) {
   const [isOpen, setIsOpen] = useState(false);

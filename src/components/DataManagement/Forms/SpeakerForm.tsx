@@ -1,13 +1,8 @@
 import React, { useState } from 'react';
-import { SpeakerManagementItem } from '../../../types/scheduler';
+import { SpeakerFormProps, SpeakerManagementItem } from '../../../types/scheduler';
 import { Plus, X } from 'lucide-react';
 
-interface Props {
-  initialData?: SpeakerManagementItem;
-  onSubmit: (data: Partial<SpeakerManagementItem>) => void;
-}
-
-export const SpeakerForm: React.FC<Props> = ({ initialData, onSubmit }) => {
+export const SpeakerForm: React.FC<SpeakerFormProps> = ({ initialData, onSubmit }) => {
   const [formData, setFormData] = useState<Partial<SpeakerManagementItem>>(
     initialData || {
       name: '',

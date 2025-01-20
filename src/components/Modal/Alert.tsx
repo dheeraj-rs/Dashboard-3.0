@@ -1,8 +1,4 @@
-interface AlertProps {
-  children: React.ReactNode;
-  className?: string;
-  variant?: 'default' | 'destructive';
-}
+import { AlertProps } from "../../types/scheduler";
 
 export function Alert({ children, className = '', variant = 'default' }: AlertProps) {
   return (

@@ -85,6 +85,7 @@ const SectionRow = ({
   selection,
   onSelect,
   setFlyoverState,
+  activeTrack,
 }: SectionRowProps & {
   selection?: SelectionState;
   onSelect?: (
@@ -219,7 +220,10 @@ const SectionRow = ({
           setFlyoverState({
             isOpen: true,
             type: "add-subsection",
-            data: { parentId: section.id },
+            data: {
+              parentId: section.id,
+              trackId: activeTrack?.id
+            },
           })
         }
         className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200"
@@ -233,14 +237,26 @@ const SectionRow = ({
         onClick={() =>
           setFlyoverState({
             isOpen: true,
-            type: "edit-section",
-            data: section,
+            type: level > 0 ? "edit-subsection" : "edit-section",
+            data: {
+              ...section,
+              trackId: activeTrack?.id,
+              isSubsection: level > 0,
+              sectionTypeId: section.sectionTypeId,
+              timeSlot: section.timeSlot,
+              speaker: section.speaker,
+              role: section.role,
+              name: section.name,
+              mergedFields: section.mergedFields
+            },
           })
         }
       />
       <Trash
-        className="w-4 h-4 mr-2 cursor-pointer"
-        onClick={() => onUpdateSection(section.id, { deleted: true })}
+        className="w-4 h-4 mr-2 cursor-pointer text-red-500 hover:text-red-700"
+        onClick={() => {
+          onUpdateSection(section.id, { deleted: true });
+        }}
       />
     </div>
   );
@@ -296,6 +312,7 @@ const SectionRow = ({
           selection={selection}
           onSelect={onSelect}
           setFlyoverState={setFlyoverState}
+          activeTrack={activeTrack}
         />
       ))}
     </>
@@ -305,7 +322,6 @@ const SectionRow = ({
 function SectionList({
   sections,
   onUpdateSection,
-  onAddSubsection,
   activeTrack,
   setFlyoverState,
 }: SectionListProps) {
@@ -531,6 +547,39 @@ function SectionList({
     }));
   };
 
+  const handleAddSubsection = (parentId: string) => {
+    if (!activeTrack) {
+      showToast.error('No active track selected');
+      return;
+    }
+
+    setFlyoverState({
+      isOpen: true,
+      type: 'add-subsection',
+      data: {
+        parentId,
+        trackId: activeTrack.id
+      }
+    });
+  };
+
+  const handleAddSection = () => {
+    if (!activeTrack) {
+      showToast.error('No active track selected');
+      return;
+    }
+
+    setFlyoverState({
+      isOpen: true,
+      type: "add-section",
+      data: { 
+        trackId: activeTrack.id,
+        parentId: null,
+        sectionType: 'program'
+      }
+    });
+  };
+
   const groupedSections = useMemo(
     () => groupSectionsByRole(sections),
     [sections]
@@ -741,13 +790,7 @@ function SectionList({
           <SelectionIndicator  />
         ) : (
           <button
-            onClick={() =>
-              setFlyoverState({
-                isOpen: true,
-                type: "add-section",
-                data: null,
-              })
-            }
+            onClick={handleAddSection}
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-violet-600 
               text-white text-sm font-medium rounded-xl relative group overflow-hidden
               hover:shadow-lg transform transition-all duration-300 
@@ -920,14 +963,13 @@ function SectionList({
                       <SectionRow
                         key={section.id}
                         section={section}
-                        showSpeakerRole={
-                          headers.find((h) => h.type === "speaker")?.isVisible
-                        }
-                        onAddSubsection={onAddSubsection}
+                        showSpeakerRole={headers.find((h) => h.type === "speaker")?.isVisible}
+                        onAddSubsection={handleAddSubsection}
                         onUpdateSection={onUpdateSection}
                         selection={selection}
                         onSelect={handleSelect}
                         setFlyoverState={setFlyoverState}
+                        activeTrack={activeTrack}
                       />
                     ))}
                   </React.Fragment>

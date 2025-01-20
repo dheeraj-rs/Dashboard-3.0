@@ -1,11 +1,6 @@
-import { Toast, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { CheckCircle2, XCircle, AlertCircle, X } from 'lucide-react';
-
-interface ToastProps {
-  t: Toast;
-  message: string;
-  type?: 'success' | 'error' | 'info';
-}
+import { ToastProps } from '../../types/scheduler';
 
 export const CustomToast = ({ t, message, type = 'info' }: ToastProps) => {
   const icons = {
@@ -87,16 +82,16 @@ export const showToast = {
   success: (message: string) => 
     toast.custom((t) => <CustomToast t={t} message={message} type="success" />, {
       duration: 4000,
-      position: 'bottom-right',
+      position: 'bottom-left',
     }),
   error: (message: string) => 
     toast.custom((t) => <CustomToast t={t} message={message} type="error" />, {
       duration: 4000,
-      position: 'bottom-right',
+      position: 'bottom-left',
     }),
   info: (message: string) => 
     toast.custom((t) => <CustomToast t={t} message={message} type="info" />, {
       duration: 4000,
-      position: 'bottom-right',
+      position: 'bottom-left',
     })
 }; 

@@ -1,41 +1,30 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
-import { DataManagementItem, SectionTypeData } from '../../types/scheduler';
-
-interface DataManagementPageProps {
-  setFlyoverState: (state: any) => void;
-  onAddItem: (type: string, item: Partial<SectionTypeData | DataManagementItem>) => void;
-  onUpdateItem: (type: string, id: string, updates: Partial<SectionTypeData | DataManagementItem>) => void;
-  onDeleteItem: (type: string, id: string) => void;
-  data: {
-    sections: SectionTypeData[];
-    speakers: DataManagementItem[];
-    roles: DataManagementItem[];
-  };
-}
+import { DataManagementItem, DataManagementPageProps } from '../../types/scheduler';
 
 export default function DataManagementPage({
   setFlyoverState,
   onDeleteItem,
   data
 }: DataManagementPageProps) {
-  const [activeTab, setActiveTab] = useState<'sections' | 'speakers' | 'roles'>('sections');
+  const [activeTab, setActiveTab] = useState<'sectionstypes' | 'speakers' | 'roles'>('sectionstypes');
   const [searchQuery, setSearchQuery] = useState('');
 
 
   const tabs = [
-    { id: 'sections', label: 'Sections', count: data.sections.length },
+    { id: 'sectionstypes', label: 'Section Types', count: data.sectionstypes.length },
     { id: 'speakers', label: 'Speakers', count: data.speakers.length },
     { id: 'roles', label: 'Roles', count: data.roles.length },
   ];
 
-  const filteredData = data[activeTab].filter(item =>
+  const filteredData = data[activeTab]?.filter((item: DataManagementItem) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ) || [];
 
   useEffect(() => {
-    console.log(data);
-  }, [data]);
+    console.log('DataManagementPage data:', data);
+    console.log('Current tab data:', data[activeTab]);
+  }, [data, activeTab]);
 
   return (
     <div className="space-y-6">
@@ -46,7 +35,7 @@ export default function DataManagementPage({
           <button
             onClick={() => setFlyoverState({
               isOpen: true,
-              type: activeTab === 'sections' 
+              type: activeTab === 'sectionstypes' 
                 ? 'add-section-type'
                 : activeTab === 'speakers'
                 ? 'add-speaker'
@@ -98,7 +87,7 @@ export default function DataManagementPage({
 
       {/* Data Grid */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredData.map((item) => (
+        {filteredData.map((item: DataManagementItem) => (
           <div
             key={item.id}
             className="group relative bg-gradient-to-br from-white to-gray-50/50 rounded-xl 
@@ -124,7 +113,7 @@ export default function DataManagementPage({
               <button
                 onClick={() => setFlyoverState({
                   isOpen: true,
-                  type: activeTab === 'sections' 
+                  type: activeTab === 'sectionstypes' 
                     ? 'edit-section-type'
                     : activeTab === 'speakers'
                     ? 'edit-speaker'

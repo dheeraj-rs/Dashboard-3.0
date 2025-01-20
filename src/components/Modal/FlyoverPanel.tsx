@@ -1,7 +1,7 @@
 import TrackForm from "../Track/TrackForm";
 import SectionForm from "../Section/SectionForm";
 import { X } from "lucide-react";
-import { FlyoverPanelProps, SpeakerManagementItem, RoleManagementItem, SectionTypeData } from '../../types/scheduler';
+import { FlyoverPanelProps, SpeakerManagementItem, RoleManagementItem, SectionManagementItem } from '../../types/scheduler';
 import ParticipantForm from "../Participants/ParticipantForm";
 import TrackSettingsPanel from "../Track/TrackSettingsPanel";
 import HeaderSettingsModal from './HeaderSettingsModal';
@@ -13,13 +13,14 @@ function FlyoverPanel({
   setFlyoverState,
   handleUpdateTrack,
   handleAddTrack,
-  handleUpdateSection,
   handleSubmitSection,
   handleAddParticipant,
   handleUpdateParticipant,
   handleAddManagementItem,
   handleUpdateManagementItem,
   tracks,
+  managementData,
+  showToast = { success: () => {}, error: () => {} },
 }: FlyoverPanelProps) {
   return (
     <aside
@@ -55,16 +56,27 @@ function FlyoverPanel({
             }
             tracks={tracks}
             onSubmit={(trackData) => {
-              if (flyoverState.type === "edit-track") {
-                handleUpdateTrack(trackData);
-                setFlyoverState({ isOpen: false, type: null, data: null });
-                return true;
-              } else {
-                const success = handleAddTrack(trackData);
-                if (success) {
-                  setFlyoverState({ isOpen: false, type: null, data: null });
+              try {
+                if (flyoverState.type === "edit-track") {
+                  handleUpdateTrack(trackData);
+                } else {
+                  const success = handleAddTrack(trackData);
+                  if (!success) {
+                    showToast.error("Failed to create track");
+                    return false;
+                  }
                 }
-                return success;
+                setFlyoverState({ isOpen: false, type: null, data: null });
+                showToast.success(
+                  flyoverState.type === "edit-track"
+                    ? "Track updated successfully"
+                    : "Track created successfully"
+                );
+                return true;
+              } catch (error) {
+                console.error('Error handling track:', error);
+                showToast.error("An error occurred");
+                return false;
               }
             }}
           />
@@ -72,27 +84,26 @@ function FlyoverPanel({
 
         {(flyoverState.type === "add-section" ||
           flyoverState.type === "edit-section" ||
-          flyoverState.type === "add-subsection") && (
+          flyoverState.type === "add-subsection" ||
+          flyoverState.type === "edit-subsection") && (
           <SectionForm
             initialData={
-              flyoverState.type === "edit-section"
-                ? flyoverState.data
+              (flyoverState.type === "edit-section" || flyoverState.type === "edit-subsection") 
+                ? flyoverState.data 
                 : undefined
             }
-            isSubsection={flyoverState.type === "add-subsection"}
-            onSubmit={(sectionData) => {
-              if (flyoverState.type === "edit-section") {
-                handleUpdateSection(flyoverState.data.id, {
-                  ...sectionData,
-                  subsections: flyoverState.data.subsections,
-                });
-              } else if (flyoverState.type === "add-subsection") {
-                handleSubmitSection(sectionData);
-              } else {
-                handleSubmitSection(sectionData);
-              }
+            isSubsection={
+              flyoverState.type === "add-subsection" || 
+              flyoverState.type === "edit-subsection"
+            }
+            onSubmit={(formData) => {
+              handleSubmitSection(formData);
               setFlyoverState({ isOpen: false, type: null, data: null });
             }}
+            sectionTypes={managementData.sectionstypes}
+            speakers={managementData.speakers}
+            roles={managementData.roles}
+            setFlyoverState={setFlyoverState}
           />
         )}
 
@@ -166,11 +177,11 @@ function FlyoverPanel({
           flyoverState.type === "edit-section-type") && (
           <DataManagementForms.SectionTypeForm
             initialData={flyoverState.type === "edit-section-type" ? flyoverState.data : undefined}
-            onSubmit={(formData: Partial<SectionTypeData>) => {
+            onSubmit={(formData: Partial<SectionManagementItem>) => {
               if (flyoverState.type === "edit-section-type") {
-                handleUpdateManagementItem('sections', flyoverState.data.id, formData);
+                handleUpdateManagementItem('sectionstypes', flyoverState.data.id, formData);
               } else {
-                handleAddManagementItem('sections', formData);
+                handleAddManagementItem('sectionstypes', formData);
               }
               setFlyoverState({ isOpen: false, type: null, data: null });
             }}

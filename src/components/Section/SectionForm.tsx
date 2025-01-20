@@ -1,15 +1,23 @@
 import React, { useState } from 'react';
-import { Section, SectionFormProps } from '../../types/scheduler';
+import { Section, ExtendedSectionFormProps } from '../../types/scheduler';
 import { validateTimeSlot } from '../../utils/validations';
 import { showToast } from '../Modal/CustomToast';
-
 type SectionField = keyof Omit<Section, 'id' | 'subsections' | 'deleted'>;
 
-export default function SectionForm({ onSubmit, initialData, isSubsection }: SectionFormProps) {
+export default function SectionForm({ 
+  onSubmit, 
+  initialData, 
+  isSubsection,
+  sectionTypes = [],
+  speakers = [],
+  roles = [],
+  setFlyoverState
+}: ExtendedSectionFormProps) {
   const [formData, setFormData] = useState<Partial<Section>>({
     name: initialData?.name || '',
     speaker: initialData?.speaker || '',
     role: initialData?.role || '',
+    sectionTypeId: initialData?.sectionTypeId || '',
     timeSlot: initialData?.timeSlot || {
       start: '09:00',
       end: '10:00'
@@ -36,7 +44,9 @@ export default function SectionForm({ onSubmit, initialData, isSubsection }: Sec
         mergeName: '',
         value: null
       }
-    }
+    },
+    ...(initialData?.id ? { id: initialData.id } : {}),
+    ...(initialData?.subsections ? { subsections: initialData.subsections } : {})
   });
 
   const timeSlot = formData.timeSlot!;
@@ -67,11 +77,48 @@ export default function SectionForm({ onSubmit, initialData, isSubsection }: Sec
       }
     }
     
-    onSubmit(formData);
+    // Prepare the submission data
+    const submissionData: Partial<Section> = {
+      ...formData,
+      // Preserve subsections when editing
+      ...(initialData?.subsections ? { subsections: initialData.subsections } : []),
+    };
+    
+    onSubmit(submissionData);
+    setFlyoverState({ isOpen: false, type: null, data: null });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 p-6">
+      <div className="text-xl font-semibold text-gray-900 mb-6">
+        {initialData?.id 
+          ? (isSubsection ? 'Edit Subsection' : 'Edit Section')
+          : (isSubsection ? 'Add New Subsection' : 'Add New Section')
+        }
+      </div>
+
+      {!isSubsection && (
+        <div>
+          <label htmlFor="sectionType" className="block text-sm font-medium text-gray-700">
+            Section Type
+          </label>
+          <select
+            id="sectionType"
+            value={formData.sectionTypeId}
+            onChange={(e) => handleChange('sectionTypeId', e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            required
+          >
+            <option value="">Select a type</option>
+            {sectionTypes.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
           {isSubsection ? 'Subsection Name' : 'Section Name'}
@@ -91,25 +138,37 @@ export default function SectionForm({ onSubmit, initialData, isSubsection }: Sec
           <label htmlFor="speaker" className="block text-sm font-medium text-gray-700">
             Speaker
           </label>
-          <input
-            type="text"
+          <select
             id="speaker"
-            value={formData.speaker as string}
+            value={formData.speaker}
             onChange={(e) => handleChange('speaker', e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          />
+          >
+            <option value="">Select a speaker</option>
+            {speakers.map((speaker) => (
+              <option key={speaker.id} value={speaker.name}>
+                {speaker.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label htmlFor="role" className="block text-sm font-medium text-gray-700">
             Role
           </label>
-          <input
-            type="text"
+          <select
             id="role"
             value={formData.role}
             onChange={(e) => handleChange('role', e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          />
+          >
+            <option value="">Select a role</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.name}>
+                {role.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -145,9 +204,14 @@ export default function SectionForm({ onSubmit, initialData, isSubsection }: Sec
       <div className="flex justify-end gap-2">
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 
+            text-white rounded-lg hover:from-blue-700 hover:to-violet-700 
+            transition-all duration-200 shadow-sm hover:shadow-md"
         >
-          Save
+          {initialData 
+            ? (isSubsection ? 'Update Subsection' : 'Update Section')
+            : (isSubsection ? 'Create Subsection' : 'Create Section')
+          }
         </button>
       </div>
     </form>

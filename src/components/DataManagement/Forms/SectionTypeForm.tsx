@@ -1,23 +1,17 @@
 import React, { useState } from 'react';
-import { SectionTypeData } from '../../../types/scheduler';
+import { SectionManagementItem, SectionTypeFormProps } from '../../../types/scheduler';
 
-interface Props {
-  initialData?: SectionTypeData;
-  onSubmit: (data: Partial<SectionTypeData>) => void;
-}
-
-export const SectionTypeForm: React.FC<Props> = ({ initialData, onSubmit }) => {
-  const [formData, setFormData] = useState<Partial<SectionTypeData>>(
-    initialData || {
-      name: '',
-      type: 'section',
-      sectionType: 'program',
-      description: '',
-      maxParticipants: undefined,
-      location: '',
-      timeSlot: { start: '09:00', end: '10:00' },
-    }
-  );
+export const SectionTypeForm: React.FC<SectionTypeFormProps> = ({ initialData, onSubmit }) => {
+  const [formData, setFormData] = useState<Partial<SectionManagementItem>>({
+    name: initialData?.name ?? '',
+    type: 'sectionstypes',
+    sectionType: initialData?.sectionType ?? 'program',
+    description: initialData?.description ?? '',
+    maxParticipants: initialData?.maxParticipants ?? undefined,
+    location: initialData?.location ?? '',
+    timeSlot: initialData?.timeSlot ?? { start: '09:00', end: '10:00' },
+    color: initialData?.color ?? '#000000'
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
