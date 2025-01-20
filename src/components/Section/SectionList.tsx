@@ -792,30 +792,37 @@ function SectionList({
       <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 mb-6">
         <div className="p-4">
           {activeTrack && (
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               {/* Track Info - Left */}
-              <div className="flex items-center gap-4">
-                <div
-                  className="h-10 min-w-36 px-2 rounded-xl bg-gradient-to-tr from-blue-500 to-violet-500 
-                  flex items-center justify-center transform transition-transform duration-300 hover:scale-110"
-                >
-                  <span className="text-lg font-bold text-white">
-                    {activeTrack.name}
-                  </span>
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="relative group">
+                    <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-violet-500 to-purple-600 
+                      bg-clip-text text-transparent inline-flex items-center gap-2">
+                      <span className="whitespace-nowrap">Track :</span>
+                      <span className="font-semibold">{activeTrack.name}</span>
+                    </span>
+                    {/* Animated underline effect */}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 via-violet-500 
+                      to-purple-600 group-hover:w-full transition-all duration-300" />
+                  </h2>
+                  
+                  {/* Optional: Add a decorative element */}
+                  <div className="hidden sm:block w-2 h-2 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 
+                    animate-pulse" />
                 </div>
                 
-
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
-                  <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
+                <div className="flex w-full flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
+                  <div className="flex min-w-40 md:w-auto items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
                     <Clock className="w-4 h-4 text-blue-500" />
                     <span className="text-sm text-gray-600">
                       {new Date(activeTrack.startDate).toLocaleDateString()} -
                       {new Date(activeTrack.endDate).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 bg-violet-50 px-3 py-1.5 rounded-lg">
+                  <div className="flex md:flex-row md:w-auto items-center gap-2 bg-violet-50 px-3 py-1.5 rounded-lg">
                     <Layers className="w-4 h-4 text-violet-500" />
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-600 flex-nowrap min-w-20">
                       {activeTrack.sections.length} sections
                     </span>
                   </div>

@@ -169,7 +169,9 @@ export interface ColorSelectionModalProps {
 export interface FlyoverState {
   isOpen: boolean;
   type: 'add-track' | 'edit-track' | 'add-section' | 'edit-section' | 'add-subsection' | 
-        'track-settings' | 'header-settings' | 'add-participant' | 'edit-participant' | '' | null;
+        'track-settings' | 'header-settings' | 'add-participant' | 'edit-participant' |
+        'add-section-item' | 'edit-section-item' | 'add-speaker' | 'edit-speaker' |
+        'add-role' | 'edit-role' | 'add-section-type' | 'edit-section-type' | '' | null;
   data: any;
 }
 export interface FlyoverPanelProps {
@@ -178,10 +180,12 @@ export interface FlyoverPanelProps {
   setFlyoverState: (state: FlyoverState) => void;
   handleUpdateTrack: (trackData: Partial<Track>) => boolean;
   handleAddTrack: (trackData: Partial<Track>) => boolean;
-  handleUpdateSection: (id: string, sectionData: any) => void;
-  handleSubmitSection: (sectionData: any) => void;
+  handleUpdateSection: (id: string, updates: Partial<Section>) => void;
+  handleSubmitSection: (sectionData: Partial<Section>) => void;
   handleAddParticipant: (participantData: Partial<Participant>) => void;
   handleUpdateParticipant: (id: string, updates: Partial<Participant>) => void;
+  handleAddManagementItem: (type: string, item: Partial<DataManagementItem>) => void;
+  handleUpdateManagementItem: (type: string, id: string, updates: Partial<DataManagementItem>) => void;
   tracks: Track[];
 }
 
@@ -302,5 +306,61 @@ export interface SectionCalendarFilterProps {
       month?: string;
     }
   } | null;
+}
+
+export interface SectionTypeData {
+  id: string;
+  name: string;
+  type: 'section';
+  sectionType: 'lunch' | 'break' | 'introduction' | 'program' | 'other';
+  maxParticipants?: number;
+  location?: string;
+  timeSlot?: {
+    start: string;
+    end: string;
+  };
+  description?: string;
+  color?: string;
+}
+
+export interface SectionManagementItem extends DataManagementItem {
+  type: 'section';
+  sectionType: 'lunch' | 'break' | 'introduction' | 'program' | 'other';
+  maxParticipants?: number;
+  location?: string;
+  timeSlot?: {
+    start: string;
+    end?: string;
+  };
+}
+
+export interface SpeakerManagementItem extends DataManagementItem {
+  type: 'speaker';
+  email: string;
+  phone?: string;
+  organization?: string;
+  expertise: string[];
+  availability: {
+    start: string;
+    end: string;
+    days: string[];
+  }[];
+  bio?: string;
+}
+
+export interface RoleManagementItem extends DataManagementItem {
+  type: 'role';
+  responsibilities: string[];
+  requirements?: string[];
+  level: 'junior' | 'mid' | 'senior' | 'lead';
+  department?: string;
+}
+
+export interface DataManagementItem {
+  id: string;
+  name: string;
+  type: 'section' | 'speaker' | 'role';
+  color?: string;
+  description?: string;
 }
 

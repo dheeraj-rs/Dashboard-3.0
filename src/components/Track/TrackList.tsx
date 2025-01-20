@@ -88,7 +88,7 @@ export default function TrackList({
               {/* Left Side - Title and Stats */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
                 <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-                  Tracks
+                  Tracks 
                 </h2>
                 
                 {/* Stats - Scrollable on mobile */}

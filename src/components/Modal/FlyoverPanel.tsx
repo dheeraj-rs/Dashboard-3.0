@@ -1,10 +1,11 @@
 import TrackForm from "../Track/TrackForm";
 import SectionForm from "../Section/SectionForm";
 import { X } from "lucide-react";
-import { FlyoverPanelProps } from '../../types/scheduler';
+import { FlyoverPanelProps, SpeakerManagementItem, RoleManagementItem, SectionTypeData } from '../../types/scheduler';
 import ParticipantForm from "../Participants/ParticipantForm";
 import TrackSettingsPanel from "../Track/TrackSettingsPanel";
 import HeaderSettingsModal from './HeaderSettingsModal';
+import { DataManagementForms } from '../DataManagement/Forms';
 
 function FlyoverPanel({
   flyoverState,
@@ -16,6 +17,8 @@ function FlyoverPanel({
   handleSubmitSection,
   handleAddParticipant,
   handleUpdateParticipant,
+  handleAddManagementItem,
+  handleUpdateManagementItem,
   tracks,
 }: FlyoverPanelProps) {
   return (
@@ -127,6 +130,51 @@ function FlyoverPanel({
               onApplyStyles={flyoverState.data.onApplyStyles}
             />
           </div>
+        )}
+
+        {(flyoverState.type === "add-speaker" || 
+          flyoverState.type === "edit-speaker") && (
+          <DataManagementForms.SpeakerForm
+            initialData={flyoverState.type === "edit-speaker" ? flyoverState.data : undefined}
+            onSubmit={(formData: Partial<SpeakerManagementItem>) => {
+              if (flyoverState.type === "edit-speaker") {
+                handleUpdateManagementItem('speakers', flyoverState.data.id, formData);
+              } else {
+                handleAddManagementItem('speakers', formData);
+              }
+              setFlyoverState({ isOpen: false, type: null, data: null });
+            }}
+          />
+        )}
+
+        {(flyoverState.type === "add-role" || 
+          flyoverState.type === "edit-role") && (
+          <DataManagementForms.RoleForm
+            initialData={flyoverState.type === "edit-role" ? flyoverState.data : undefined}
+            onSubmit={(formData: Partial<RoleManagementItem>) => {
+              if (flyoverState.type === "edit-role") {
+                handleUpdateManagementItem('roles', flyoverState.data.id, formData);
+              } else {
+                handleAddManagementItem('roles', formData);
+              }
+              setFlyoverState({ isOpen: false, type: null, data: null });
+            }}
+          />
+        )}
+
+        {(flyoverState.type === "add-section-type" || 
+          flyoverState.type === "edit-section-type") && (
+          <DataManagementForms.SectionTypeForm
+            initialData={flyoverState.type === "edit-section-type" ? flyoverState.data : undefined}
+            onSubmit={(formData: Partial<SectionTypeData>) => {
+              if (flyoverState.type === "edit-section-type") {
+                handleUpdateManagementItem('sections', flyoverState.data.id, formData);
+              } else {
+                handleAddManagementItem('sections', formData);
+              }
+              setFlyoverState({ isOpen: false, type: null, data: null });
+            }}
+          />
         )}
       </div>
 

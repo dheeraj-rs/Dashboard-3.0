@@ -1,16 +1,31 @@
 import { useState, lazy, Suspense, useEffect } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
-import { Track, Section, FlyoverState, Participant } from "./types/scheduler";
+import { Track, Section, FlyoverState, Participant, SectionManagementItem, SpeakerManagementItem, RoleManagementItem } from "./types/scheduler";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { Calendar, Users, Settings, Layout } from "lucide-react";
+import { Calendar, Users, Settings, Layout, Database } from "lucide-react";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { Toaster } from "react-hot-toast";
+import DataManagementPage from "./components/DataManagement/DataManagementPage";
 
 const TrackList = lazy(() => import("./components/Track/TrackList"));
 const SectionList = lazy(() => import("./components/Section/SectionList"));
 import FlyoverPanel from "./components/Modal/FlyoverPanel";
 import ParticipantsPage from "./components/Participants/ParticipantsPage";
 import { showToast } from "./components/Modal/CustomToast";
+
+export interface DataManagementItem {
+  id: string;
+  name: string;
+  type: 'section' | 'speaker' | 'role';
+  color?: string;
+  description?: string;
+}
+
+export interface DataManagementState {
+  sections: DataManagementItem[];
+  speakers: DataManagementItem[];
+  roles: DataManagementItem[];
+}
 
 function App() {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -23,10 +38,16 @@ function App() {
     type: "",
     data: null,
   });
+  const [managementData, setManagementData] = useState<DataManagementState>({
+    sections: [],
+    speakers: [],
+    roles: []
+  });
 
   const navigationItems = [
     { id: "schedule", label: "Schedule", icon: Calendar },
     { id: "participants", label: "Participants", icon: Users },
+    { id: "data", label: "Data Management", icon: Database },
     { id: "layout", label: "Layout", icon: Layout },
     { id: "settings", label: "Settings", icon: Settings },
   ];
@@ -353,11 +374,88 @@ function App() {
         return "Add New Participant";
       case "edit-participant":
         return "Edit Participant";
+      case "add-section-type":
+        return "Add New Section Type";
+      case "edit-section-type":
+        return "Edit Section Type";
+      case "add-speaker":
+        return "Add New Speaker";
+      case "edit-speaker":
+        return "Edit Speaker";
+      case "add-role":
+        return "Add New Role";
+      case "edit-role":
+        return "Edit Role";
       default:
         return "Details";
     }
   };
 
+  const handleAddManagementItem = (type: string, item: Partial<DataManagementItem>) => {
+    const baseItem = {
+      id: crypto.randomUUID(),
+      name: item.name || '',
+      type: type as 'section' | 'speaker' | 'role',
+      color: item.color,
+      description: item.description
+    };
+
+    let newItem;
+    switch (type) {
+      case 'sections':
+        newItem = {
+          ...baseItem,
+          sectionType: (item as SectionManagementItem).sectionType || 'program',
+          maxParticipants: (item as SectionManagementItem).maxParticipants,
+          location: (item as SectionManagementItem).location,
+          timeSlot: (item as SectionManagementItem).timeSlot
+        };
+        break;
+      case 'speakers':
+        newItem = {
+          ...baseItem,
+          email: (item as SpeakerManagementItem).email,
+          phone: (item as SpeakerManagementItem).phone,
+          organization: (item as SpeakerManagementItem).organization,
+          expertise: (item as SpeakerManagementItem).expertise || [],
+          availability: (item as SpeakerManagementItem).availability || [],
+          bio: (item as SpeakerManagementItem).bio
+        };
+        break;
+      case 'roles':
+        newItem = {
+          ...baseItem,
+          responsibilities: (item as RoleManagementItem).responsibilities || [],
+          requirements: (item as RoleManagementItem).requirements || [],
+          level: (item as RoleManagementItem).level || 'mid',
+          department: (item as RoleManagementItem).department
+        };
+        break;
+      default:
+        newItem = baseItem;
+    }
+
+    setManagementData(prev => ({
+      ...prev,
+      [type]: [...prev[type], newItem]
+    }));
+  };
+
+  const handleUpdateManagementItem = (type: string, id: string, updates: Partial<DataManagementItem>) => {
+    setManagementData(prev => ({
+      ...prev,
+      [type]: prev[type].map(item =>
+        item.id === id ? { ...item, ...updates } : item
+      )
+    }));
+  };
+
+  const handleDeleteManagementItem = (type: string, id: string) => {
+    setManagementData(prev => ({
+      ...prev,
+      [type]: prev[type].filter(item => item.id !== id)
+    }));
+  };
 
   useEffect(() => {
     console.clear();
@@ -417,6 +515,15 @@ function App() {
                 onDeleteParticipant={handleDeleteParticipant}
               />
             )}
+            {activeTab === "data" && (
+              <DataManagementPage
+                setFlyoverState={setFlyoverState}
+                onAddItem={handleAddManagementItem}
+                onUpdateItem={handleUpdateManagementItem}
+                onDeleteItem={handleDeleteManagementItem}
+                data={managementData}
+              />
+            )}
           </Suspense>
         </ErrorBoundary>
         <FlyoverPanel
@@ -429,6 +536,8 @@ function App() {
           handleSubmitSection={handleSubmitSection}
           handleAddParticipant={handleAddParticipant}
           handleUpdateParticipant={handleUpdateParticipant}
+          handleAddManagementItem={handleAddManagementItem}
+          handleUpdateManagementItem={handleUpdateManagementItem}
           tracks={tracks}
         />
       </DashboardLayout>
