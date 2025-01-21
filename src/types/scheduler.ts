@@ -165,7 +165,8 @@ export interface FlyoverState {
   type: 'add-track' | 'edit-track' | 'add-section' | 'edit-section' | 'add-subsection' | 
         'edit-subsection' | 'track-settings' | 'header-settings' | 'add-participant' | 
         'edit-participant' | 'add-section-item' | 'edit-section-item' | 'add-speaker' | 
-        'edit-speaker' | 'add-role' | 'edit-role' | 'add-section-type' | 'edit-section-type' | 
+        'edit-speaker' | 'add-role' | 'edit-role' | 'add-section-type' | 'edit-section-type' |
+        'add-guest' | 'edit-guest' | 
         '' | null;
   data: any;
 }
@@ -177,8 +178,6 @@ export interface FlyoverPanelProps {
   handleAddTrack: (trackData: Partial<Track>) => boolean;
   handleUpdateSection: (sectionId: string, updates: Partial<Section>) => void;
   handleSubmitSection: (sectionData: Partial<Section>) => void;
-  handleAddParticipant: (participant: Partial<Participant>) => void;
-  handleUpdateParticipant: (id: string, updates: Partial<Participant>) => void;
   handleAddManagementItem: (type: string, item: Partial<DataManagementItem>) => void;
   handleUpdateManagementItem: (type: string, id: string, updates: Partial<DataManagementItem>) => void;
   tracks: Track[];
@@ -191,23 +190,6 @@ export interface FlyoverPanelProps {
 
 export type Tracks = Track[];
 
-export interface Participant {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  organization: string;
-  sessions: string[];
-}
-
-export interface ParticipantsPageProps {
-  setFlyoverState: (state: FlyoverState) => void;
-  participants: Participant[];
-  onAddParticipant: (participantData: Partial<Participant>) => void;
-  onUpdateParticipant: (participantId: string, updates: Partial<Participant>) => void;
-  onDeleteParticipant: (participantId: string) => void;
-}
-
 export interface DashboardLayoutProps {
   children: React.ReactNode;
   navigationItems: { id: string; label: string; icon: LucideIcon }[];
@@ -216,11 +198,6 @@ export interface DashboardLayoutProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
   onSearch?: (query: string) => void;
-}
-
-export interface ParticipantFormProps {
-  onSubmit: (participant: Partial<Participant>) => void;
-  initialData?: Participant;
 }
 
 export interface MergedCell {
@@ -330,17 +307,28 @@ export interface RoleManagementItem extends DataManagementItem {
 export interface DataManagementItem {
   id: string;
   name: string;
-  type: 'section' | 'speaker' | 'role' | 'sectionstypes';
+  type: 'section' | 'speaker' | 'role' | 'sectionstypes' | 'guest';
   color?: string;
   description?: string;
 }
 
+export interface GuestManagementItem extends DataManagementItem {
+  type: 'guest';
+  email: string;
+  phone?: string;
+  organization?: string;
+  invitationStatus: 'pending' | 'accepted' | 'declined';
+  dietaryRestrictions?: string[];
+  notes?: string;
+  accessLevel: 'vip' | 'standard' | 'limited';
+}
+
 export interface DataManagementState {
-  sections: DataManagementItem[];
+  sections: SectionManagementItem[];
   speakers: SpeakerManagementItem[];
   roles: RoleManagementItem[];
   sectionstypes: SectionManagementItem[];
-  [key: string]: DataManagementItem[] | SpeakerManagementItem[] | RoleManagementItem[] | SectionManagementItem[];
+  guests: GuestManagementItem[];
 }
 
 export interface DataManagementPageProps {

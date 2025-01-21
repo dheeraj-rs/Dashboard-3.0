@@ -843,7 +843,9 @@ function SectionList({
                     <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-violet-500 to-purple-600 
                       bg-clip-text text-transparent inline-flex items-center gap-2">
                       <span className="whitespace-nowrap">Track :</span>
-                      <span className="font-semibold">{activeTrack.name}</span>
+                      <span className="font-semibold text-nowrap text-ellipsis overflow-hidden">
+                        {activeTrack.name}
+                      </span>
                     </span>
                     {/* Animated underline effect */}
                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 via-violet-500 
@@ -908,7 +910,7 @@ function SectionList({
 
               {/* Enhanced Search Bar */}
               <div className="relative flex-1 group">
-                <div className="relative transform transition-all duration-200 group-hover:scale-[1.02]">
+                <div className="relative transform transition-all duration-200">
                   <input
                     type="text"
                     placeholder="Search sections..."
@@ -951,7 +953,7 @@ function SectionList({
       {/* Main Content */}
       <div className="flex-1 p-4 overflow-hidden">
         <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow h-full flex flex-col">
-          <div className="overflow-auto flex-1">
+          <div className="overflow-auto flex-1  min-h-[65vh] ">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="sticky top-0 bg-white z-10">
                 <tr>{tableHeaders}</tr>

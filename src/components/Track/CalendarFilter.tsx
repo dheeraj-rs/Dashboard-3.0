@@ -1,10 +1,31 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Calendar, X } from 'lucide-react';
 import { CalendarFilterProps } from '../../types/scheduler';
 
 export default function CalendarFilter({ tracks, onFilterChange, activeFilter }: CalendarFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filterType, setFilterType] = useState<'day' | 'month' | 'year'>('month');
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isOpen &&
+        buttonRef.current &&
+        dropdownRef.current &&
+        !buttonRef.current.contains(event.target as Node) &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   // Get unique years and months from tracks
   const dates = tracks.map(track => new Date(track.startDate));
@@ -28,6 +49,7 @@ export default function CalendarFilter({ tracks, onFilterChange, activeFilter }:
   return (
     <div className="relative w-full">
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg shadow-sm border 
           ${activeFilter ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'} 
@@ -54,7 +76,10 @@ export default function CalendarFilter({ tracks, onFilterChange, activeFilter }:
       </button>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 right-0 w-full min-w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+        <div 
+          ref={dropdownRef}
+          className="absolute top-full mt-2 right-0 w-full min-w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+        >
           <div className="p-2 border-b">
             <div className="flex gap-2">
               <button

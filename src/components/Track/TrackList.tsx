@@ -154,7 +154,7 @@ export default function TrackList({
               </div>
               
               <div className="relative flex-1 group">
-                <div className="relative transform transition-all duration-200 group-hover:scale-[1.02]">
+                <div className="relative transform transition-all duration-200">
                   <input
                     type="text"
                     placeholder="Search..."

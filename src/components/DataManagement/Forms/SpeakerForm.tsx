@@ -205,7 +205,7 @@ export const SpeakerForm: React.FC<SpeakerFormProps> = ({ initialData, onSubmit 
 
       <button
         type="submit"
-        className="w-full px-4 py-2 pb-14 bg-gradient-to-r from-blue-600 to-violet-600 
+        className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 
           text-white rounded-lg hover:from-blue-700 hover:to-violet-700 
           transition-all duration-200 shadow-sm hover:shadow-md"
       >

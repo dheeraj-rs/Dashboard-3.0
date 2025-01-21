@@ -1,30 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { DataManagementItem, DataManagementPageProps } from '../../types/scheduler';
 
 export default function DataManagementPage({
   setFlyoverState,
   onDeleteItem,
-  data
+  data,
 }: DataManagementPageProps) {
-  const [activeTab, setActiveTab] = useState<'sectionstypes' | 'speakers' | 'roles'>('sectionstypes');
+  const [activeTab, setActiveTab] = useState<'sectionstypes' | 'speakers' | 'roles' | 'guests'>('sectionstypes');
   const [searchQuery, setSearchQuery] = useState('');
-
 
   const tabs = [
     { id: 'sectionstypes', label: 'Section Types', count: data.sectionstypes.length },
     { id: 'speakers', label: 'Speakers', count: data.speakers.length },
     { id: 'roles', label: 'Roles', count: data.roles.length },
+    { id: 'guests', label: 'Guests', count: data.guests.length },
   ];
 
   const filteredData = data[activeTab]?.filter((item: DataManagementItem) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
-
-  useEffect(() => {
-    console.log('DataManagementPage data:', data);
-    console.log('Current tab data:', data[activeTab]);
-  }, [data, activeTab]);
 
   return (
     <div className="space-y-6">
@@ -32,23 +27,27 @@ export default function DataManagementPage({
       <div className="bg-white rounded-xl shadow-sm p-4">
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <h1 className="text-2xl font-semibold text-slate-800">Data Management</h1>
-          <button
-            onClick={() => setFlyoverState({
-              isOpen: true,
-              type: activeTab === 'sectionstypes' 
-                ? 'add-section-type'
-                : activeTab === 'speakers'
-                ? 'add-speaker'
-                : 'add-role',
-              data: null,
-            })}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 
-              text-white rounded-lg hover:from-blue-700 hover:to-violet-700 transition-all duration-200 
-              shadow-sm hover:shadow-md"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add New {activeTab.slice(0, -1)}</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFlyoverState({
+                isOpen: true,
+                type: activeTab === 'sectionstypes' 
+                  ? 'add-section-type'
+                  : activeTab === 'speakers'
+                  ? 'add-speaker'
+                  : activeTab === 'guests'
+                  ? 'add-guest'
+                  : 'add-role',
+                data: null,
+              })}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 
+                text-white rounded-lg hover:from-blue-700 hover:to-violet-700 transition-all duration-200 
+                shadow-sm hover:shadow-md"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add New {activeTab.slice(0, -1)}</span>
+            </button>
+          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -117,6 +116,8 @@ export default function DataManagementPage({
                     ? 'edit-section-type'
                     : activeTab === 'speakers'
                     ? 'edit-speaker'
+                    : activeTab === 'guests'
+                    ? 'edit-guest'
                     : 'edit-role',
                   data: item,
                 })}

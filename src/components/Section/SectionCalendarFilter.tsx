@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Calendar, Clock, X } from 'lucide-react';
 import { SectionCalendarFilterProps } from '../../types/scheduler';
 import { createPortal } from 'react-dom';
@@ -11,6 +11,26 @@ export default function SectionCalendarFilter({
   const [isOpen, setIsOpen] = useState(false);
   const [filterType, setFilterType] = useState<'time' | 'day' | 'month'>(activeFilter?.type || 'time');
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isOpen &&
+        buttonRef.current &&
+        dropdownRef.current &&
+        !buttonRef.current.contains(event.target as Node) &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   // Get unique times and days from sections
   const times = [...new Set(sections.flatMap(section => [
@@ -92,6 +112,7 @@ export default function SectionCalendarFilter({
 
       {isOpen && buttonRef.current && createPortal(
         <div 
+          ref={dropdownRef}
           className="absolute top-full right-0 w-full min-w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
           style={{
             top: buttonRef.current.getBoundingClientRect().bottom + 8,

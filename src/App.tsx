@@ -1,15 +1,15 @@
 import { useState, lazy, Suspense, useEffect } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
-import { Calendar, Users, Settings, Layout, Database } from "lucide-react";
+import { Calendar,Settings, Layout, Database, Sprout } from "lucide-react";
 import { Toaster } from "react-hot-toast";
-import { Track, Section, FlyoverState, Participant, SectionManagementItem, SpeakerManagementItem, RoleManagementItem, DataManagementItem, DataManagementState } from "./types/scheduler";
+import { Track, Section, FlyoverState, SectionManagementItem, SpeakerManagementItem, RoleManagementItem, DataManagementItem, DataManagementState, GuestManagementItem } from "./types/scheduler";
 import { showToast } from "./components/Modal/CustomToast";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
+import DataSeedingPage from "./components/DataSeeding/DataSeedingPage";
 const TrackList = lazy(() => import("./components/Track/TrackList"));
 const SectionList = lazy(() => import("./components/Section/SectionList"));
 const FlyoverPanel = lazy(() => import("./components/Modal/FlyoverPanel"));
-const ParticipantsPage = lazy(() => import("./components/Participants/ParticipantsPage"));
 const DataManagementPage = lazy(() => import("./components/DataManagement/DataManagementPage"));    
 
 function App() {
@@ -17,7 +17,6 @@ function App() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [participants, setParticipants] = useState<Participant[]>([]);
   const [flyoverState, setFlyoverState] = useState<FlyoverState>({
     isOpen: false,
     type: "",
@@ -27,12 +26,13 @@ function App() {
     sections: [],
     speakers: [],
     roles: [],
-    sectionstypes: []
+    sectionstypes: [],
+    guests: []
   });
   const navigationItems = [
     { id: "schedule", label: "Schedule", icon: Calendar },
-    { id: "participants", label: "Participants", icon: Users },
     { id: "data", label: "Data Management", icon: Database },
+    { id: "seeding", label: "Data Seeding", icon: Sprout },
     { id: "layout", label: "Layout", icon: Layout },
     { id: "settings", label: "Settings", icon: Settings },
   ];
@@ -304,35 +304,6 @@ function App() {
     }
   };
 
-  const handleAddParticipant = (participantData: Partial<Participant>) => {
-    const newParticipant: Participant = {
-      id: crypto.randomUUID(),
-      name: participantData.name || "",
-      role: participantData.role || "",
-      email: participantData.email || "",
-      organization: participantData.organization || "",
-      sessions: participantData.sessions || [],
-    };
-    setParticipants((prev) => [...prev, newParticipant]);
-  };
-
-  const handleUpdateParticipant = (
-    participantId: string,
-    updates: Partial<Participant>
-  ) => {
-    setParticipants((prev) =>
-      prev.map((participant) =>
-        participant.id === participantId
-          ? { ...participant, ...updates }
-          : participant
-      )
-    );
-  };
-
-  const handleDeleteParticipant = (participantId: string) => {
-    setParticipants((prev) => prev.filter((p) => p.id !== participantId));
-  };
-
   const onDragEnd = (result: DropResult) => {
     const { destination, source, type } = result;
 
@@ -385,10 +356,6 @@ function App() {
         return "Add New Subsection";
       case "edit-subsection":
         return "Edit Subsection";
-      case "add-participant":
-        return "Add New Participant";
-      case "edit-participant":
-        return "Edit Participant";
       case "add-section-type":
         return "Add New Section Type";
       case "edit-section-type":
@@ -401,6 +368,10 @@ function App() {
         return "Add New Role";
       case "edit-role":
         return "Edit Role";
+      case "add-guest":
+        return "Add New Guest";
+      case "edit-guest":
+        return "Edit Guest";
       default:
         return "Details";
     }
@@ -410,7 +381,7 @@ function App() {
     const baseItem = {
       id: crypto.randomUUID(),
       name: item.name || '',
-      type: type as 'section' | 'speaker' | 'role',
+      type: type === 'guests' ? 'guest' : type.slice(0, -1) as 'section' | 'speaker' | 'role' | 'sectionstypes',
       color: item.color,
       description: item.description
     };
@@ -446,20 +417,33 @@ function App() {
           department: (item as RoleManagementItem).department
         };
         break;
+      case 'guests':
+        newItem = {
+          ...baseItem,
+          type: 'guest',
+          email: (item as GuestManagementItem).email,
+          phone: (item as GuestManagementItem).phone,
+          organization: (item as GuestManagementItem).organization,
+          invitationStatus: (item as GuestManagementItem).invitationStatus || 'pending',
+          dietaryRestrictions: (item as GuestManagementItem).dietaryRestrictions || [],
+          notes: (item as GuestManagementItem).notes,
+          accessLevel: (item as GuestManagementItem).accessLevel || 'standard'
+        };
+        break;
       default:
         newItem = baseItem;
     }
 
     setManagementData(prev => ({
       ...prev,
-      [type]: [...prev[type], newItem]
+      [type]: [...(prev[type as keyof DataManagementState]), newItem]
     }));
   };
 
   const handleUpdateManagementItem = (type: string, id: string, updates: Partial<DataManagementItem>) => {
     setManagementData(prev => ({
       ...prev,
-      [type]: prev[type].map(item =>
+      [type]: prev[type as keyof DataManagementState].map(item =>
         item.id === id ? { ...item, ...updates } : item
       )
     }));
@@ -468,7 +452,7 @@ function App() {
   const handleDeleteManagementItem = (type: string, id: string) => {
     setManagementData(prev => ({
       ...prev,
-      [type]: prev[type].filter(item => item.id !== id)
+      [type]: prev[type as keyof DataManagementState].filter(item => item.id !== id)
     }));
   };
 
@@ -521,15 +505,6 @@ function App() {
                 )}
               </div>
             )}
-            {activeTab === "participants" && (
-              <ParticipantsPage
-                setFlyoverState={setFlyoverState}
-                participants={participants}
-                onAddParticipant={handleAddParticipant}
-                onUpdateParticipant={handleUpdateParticipant}
-                onDeleteParticipant={handleDeleteParticipant}
-              />
-            )}
             {activeTab === "data" && (
               <DataManagementPage
                 setFlyoverState={setFlyoverState}
@@ -537,6 +512,18 @@ function App() {
                 onUpdateItem={handleUpdateManagementItem}
                 onDeleteItem={handleDeleteManagementItem}
                 data={managementData}
+              />
+            )}
+            {activeTab === "seeding" && (
+              <DataSeedingPage
+                onAddItem={handleAddManagementItem}
+                onDeleteItem={handleDeleteManagementItem}
+                onAddTrack={handleAddTrack}
+                onDeleteTrack={handleDeleteTrack}
+                data={{
+                  ...managementData,
+                  tracks: tracks
+                }}
               />
             )}
           </Suspense>
@@ -549,8 +536,6 @@ function App() {
           handleAddTrack={handleAddTrack}
           handleUpdateSection={handleUpdateSection}
           handleSubmitSection={handleSubmitSection}
-          handleAddParticipant={handleAddParticipant}
-          handleUpdateParticipant={handleUpdateParticipant}
           handleAddManagementItem={handleAddManagementItem}
           handleUpdateManagementItem={handleUpdateManagementItem}
           tracks={tracks}
