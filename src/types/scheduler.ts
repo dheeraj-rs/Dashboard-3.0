@@ -2,6 +2,13 @@ import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
 import { Toast } from 'react-hot-toast';
 
+export const SPECIAL_SECTION_TYPES = {
+  lunch: 'lunch',
+  break: 'break',
+  introduction: 'introduction',
+  other: 'other'
+} as const;
+
 const colorOptions = [
   { name: "Blue", class: "bg-blue-100", hover: "hover:bg-blue-200" },
   { name: "Green", class: "bg-green-100", hover: "hover:bg-green-200" },
@@ -98,6 +105,7 @@ export interface SectionRowProps {
   onSelect?: (sectionId: string, columnType: keyof MergedFields) => void;
   setFlyoverState: (state: FlyoverState) => void;
   activeTrack: Track | null;
+  sectionTypes?: SectionManagementItem[];
 }
 
 export interface TableHeader {
@@ -339,15 +347,16 @@ export interface DataManagementPageProps {
   data: DataManagementState;
 }
 
-export interface SectionManagementItem extends DataManagementItem {
+export interface SectionManagementItem {
+  id: string;
+  name: string;
   type: 'sectionstypes';
-  sectionType?: 'lunch' | 'break' | 'introduction' | 'program' | 'other';
+  sectionType: keyof typeof SPECIAL_SECTION_TYPES | 'program';
+  description?: string;
   maxParticipants?: number;
   location?: string;
-  timeSlot?: {
-    start: string;
-    end: string;
-  };
+  color?: string;
+  timeSlot?: TimeSlot;
 }
 
 

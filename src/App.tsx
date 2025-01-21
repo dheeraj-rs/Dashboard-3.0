@@ -127,7 +127,7 @@ function App() {
           return { ...track, sections: [...track.sections, newSection] };
         })
       );
-      showToast.success("Section added successfully");
+      // showToast.success("Section addefd successfully");
     } catch (error) {
       showToast.error("Failed to add section");
     }
