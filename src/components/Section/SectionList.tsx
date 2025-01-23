@@ -32,12 +32,30 @@ import ColorSelectionModal from "../Modal/ColorSelectionModal";
 import SectionCalendarFilter from "./SectionCalendarFilter";
 import { showToast } from "../Modal/CustomToast";
 
+const MAX_SECTION_DEPTH = 10;
+
 const sectionLevelColors = {
-  0: "bg-blue-50 border-l-4 border-l-blue-500",
-  1: "bg-purple-50 border-l-4 border-l-purple-500",
-  2: "bg-green-50 border-l-4 border-l-green-500",
-  3: "bg-orange-50 border-l-4 border-l-orange-500",
-  4: "bg-pink-50 border-l-4 border-l-pink-500",
+  0: {
+    bg: "bg-gradient-to-r from-white to-blue-50/30",
+    border: "border-l-[3px] border-l-blue-500",
+    text: "text-gray-900",
+    hover: "hover:bg-blue-50/40",
+    indicator: "bg-gradient-to-r from-blue-500 to-blue-600",
+  },
+  1: {
+    bg: "bg-gradient-to-r from-white to-indigo-50/20",
+    border: "border-l-[3px] border-l-indigo-400",
+    text: "text-gray-800",
+    hover: "hover:bg-indigo-50/30",
+    indicator: "bg-gradient-to-r from-indigo-400 to-indigo-500",
+  },
+  2: {
+    bg: "bg-gradient-to-r from-white to-violet-50/10",
+    border: "border-l-[3px] border-l-violet-400",
+    text: "text-gray-700",
+    hover: "hover:bg-violet-50/20",
+    indicator: "bg-gradient-to-r from-violet-400 to-violet-500",
+  },
 };
 
 const colorOptions = [
@@ -76,6 +94,108 @@ const getSectionValue = (
   return section[key as keyof Section];
 };
 
+const generateSectionColors = (level: number) => {
+  const colorSchemes = {
+    0: {
+      // Main section
+      bg: "from-blue-50 via-blue-50 to-white",
+      border: "border-blue-200",
+      hover: "hover:from-blue-100/80 hover:to-blue-50",
+      text: "from-blue-700 to-blue-500",
+      dot: "from-blue-500 to-blue-600",
+      ring: "ring-blue-100",
+      indicator: "M",
+    },
+    1: {
+      // First level subsection
+      bg: "from-indigo-50 via-indigo-50 to-white",
+      border: "border-indigo-200",
+      hover: "hover:from-indigo-100/80 hover:to-indigo-50",
+      text: "from-indigo-700 to-indigo-500",
+      dot: "from-indigo-500 to-indigo-600",
+      ring: "ring-indigo-100",
+      indicator: "S1",
+    },
+    2: {
+      // Second level subsection
+      bg: "from-violet-50 via-violet-50 to-white",
+      border: "border-violet-200",
+      hover: "hover:from-violet-100/80 hover:to-violet-50",
+      text: "from-violet-700 to-violet-500",
+      dot: "from-violet-500 to-violet-600",
+      ring: "ring-violet-100",
+      indicator: "S2",
+    },
+    3: {
+      // Third level subsection
+      bg: "from-purple-50 via-purple-50 to-white",
+      border: "border-purple-200",
+      hover: "hover:from-purple-100/80 hover:to-purple-50",
+      text: "from-purple-700 to-purple-500",
+      dot: "from-purple-500 to-purple-600",
+      ring: "ring-purple-100",
+      indicator: "S3",
+    },
+    4: {
+      // Fourth level subsection
+      bg: "from-fuchsia-50 via-fuchsia-50 to-white",
+      border: "border-fuchsia-200",
+      hover: "hover:from-fuchsia-100/80 hover:to-fuchsia-50",
+      text: "from-fuchsia-700 to-fuchsia-500",
+      dot: "from-fuchsia-500 to-fuchsia-600",
+      ring: "ring-fuchsia-100",
+      indicator: "S4",
+    },
+  };
+
+  return colorSchemes[level as keyof typeof colorSchemes] || colorSchemes[0];
+};
+
+const getLevelIndicator = (level: number) => {
+  const colorSet = generateSectionColors(level);
+  const indentWidth = level * 6;
+
+  return (
+    <div
+      className="flex items-center h-full"
+      style={{ paddingLeft: `${indentWidth}px` }}
+    >
+      <div
+        className={`
+        flex items-center gap-2 px-2.5 py-1.5 rounded-lg
+        bg-gradient-to-r ${colorSet.bg}
+        border ${colorSet.border}
+        group ${colorSet.hover}
+        transition-all duration-200
+      `}
+      >
+        {/* Level dot with pulse effect */}
+        <div className="relative">
+          <div
+            className={`
+            w-2 h-2 rounded-full 
+            bg-gradient-to-r ${colorSet.dot}
+            ring-2 ${colorSet.ring}
+          `}
+          />
+          <div className="absolute -inset-1 bg-current/20 rounded-full animate-pulse group-hover:animate-none opacity-50" />
+        </div>
+
+        {/* Level indicator text */}
+        <span
+          className={`
+          text-xs font-medium tracking-wide
+          bg-gradient-to-r ${colorSet.text}
+          bg-clip-text text-transparent
+        `}
+        >
+          {level === 0 ? "MAIN" : `SUB ${level}`}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 const SectionRow = ({
   section,
   level = 0,
@@ -83,7 +203,7 @@ const SectionRow = ({
   onAddSubsection,
   onUpdateSection,
   selection,
-  onSelect,
+  onSelect = () => {},
   setFlyoverState,
   activeTrack,
 }: SectionRowProps & {
@@ -95,10 +215,29 @@ const SectionRow = ({
   ) => void;
 }) => {
   const getLevelColor = (level: number) => {
-    return (
-      sectionLevelColors[level as keyof typeof sectionLevelColors] ||
-      sectionLevelColors[0]
-    );
+    if (level === 0) {
+      return `
+        bg-gradient-to-r from-slate-300/50 to-white
+        border-l-[3px] border-l-blue-500
+        bg-blue-300/50
+        transition-colors duration-200
+        shadow-[0_1px_3px_0_rgb(0,0,0,0.05)]
+      `;
+    } else if (level === 1) {
+      return `
+        bg-slate-50/40
+        border-l-[3px] border-l-indigo-400
+         hover:bg-slate-400/30
+        transition-colors duration-200
+      `;
+    } else {
+      return `
+        bg-slate-50/20
+        border-l-[3px] border-l-violet-300
+        hover:bg-slate-400/30
+        transition-colors duration-200
+      `;
+    }
   };
 
   const getMergedCellInfo = (
@@ -117,7 +256,8 @@ const SectionRow = ({
   };
 
   const getColumnClassName = (columnType: keyof MergedFields) => {
-    const baseClasses = "border-b border-r text-sm relative cursor-pointer";
+    const baseClasses =
+      "border-b border-r text-sm relative cursor-pointer select-none";
     const timeClasses = columnType === "timeSlot" ? "pr-2" : "px-4 py-2";
 
     const mergedCell = getMergedCellInfo(section.id, columnType);
@@ -128,46 +268,68 @@ const SectionRow = ({
       timeClasses,
       mergedCell ? mergedCell.color : "",
       mergedCell ? "font-medium" : "",
-      isSelected ? "ring-2 ring-indigo-400 bg-indigo-50" : "",
-      selection?.isSelecting ? "hover:bg-indigo-50/50" : "",
-      "transition-colors duration-200",
+      isSelected ? "ring-1 ring-blue-500 bg-blue-50/50" : "",
+      selection?.isSelecting ? "hover:bg-blue-50/30" : "",
+      "transition-colors duration-150",
+      "first:border-l",
     ];
 
     return classes.filter(Boolean).join(" ");
   };
 
   const handleColumnClick = (columnType: keyof MergedFields) => {
-    if (!selection?.isSelecting || !onSelect) return;
+    if (!onSelect) return;
     const cellId = `${section.id}-${columnType}`;
     onSelect(cellId, section.id, columnType);
   };
 
   const renderTimeSlot = (timeSlot: TimeSlot, level: number) => {
-    const baseIndent = 24;
+    const baseIndent = 20;
     const indentWidth = level * baseIndent;
+    const colors =
+      sectionLevelColors[level as keyof typeof sectionLevelColors] ||
+      sectionLevelColors[0];
 
     return (
-      <div className="flex items-center min-h-[2rem] relative">
-        {level > 0 && (
+      <div className="flex items-center min-h-[1.25rem] relative">
+        {level > 0 ? (
           <div
             className="absolute flex items-center h-full"
             style={{ left: `${indentWidth}px` }}
           >
             <div
-              className="absolute h-full w-[2px] bg-gray-200"
+              className="absolute h-full w-px bg-indigo-200/60"
               style={{ left: "-1px", top: "-50%" }}
             />
-            <div className="h-[2px] w-4 bg-gray-200" />
-            <div className="w-2 h-2 rounded-full border border-gray-300 bg-white" />
+            <div className="h-px w-3 bg-indigo-200/60" />
+            <div
+              className={`w-1.5 h-1.5 rounded-sm border border-indigo-300/60 ${
+                level === 1 ? "bg-indigo-50" : "bg-white"
+              }`}
+            />
           </div>
+        ) : (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/20" />
         )}
         <span
           className={`
-            whitespace-nowrap
-            ${level > 0 ? "text-gray-500 text-sm" : "text-gray-700 font-medium"}
+            whitespace-nowrap flex items-center gap-2
+            ${level === 0 ? "text-gray-700 font-medium" : colors.text}
+            ${level > 0 ? "text-sm" : ""}
           `}
-          style={{ marginLeft: level > 0 ? `${indentWidth + 32}px` : "8px" }}
+          style={{ marginLeft: level > 0 ? `${indentWidth + 24}px` : "12px" }}
         >
+          {/* {level === 0 && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              <span className="text-xs font-medium text-blue-500">Main</span>
+            </div>
+          )}
+          {level > 0 && (
+            <span className={`text-xs ${level === 1 ? 'text-indigo-400' : 'text-indigo-300'}`}>
+              Sub{level}
+            </span>
+          )} */}
           {timeSlot.start} - {timeSlot.end}
         </span>
       </div>
@@ -214,23 +376,22 @@ const SectionRow = ({
   };
 
   const renderActionButtons = (section: Section) => (
-    <div className="flex items-center justify-center gap-3">
+    <div className="flex items-center justify-end gap-2">
       <button
-        onClick={() =>
-          setFlyoverState({
-            isOpen: true,
-            type: "add-subsection",
-            data: {
-              parentId: section.id,
-              trackId: activeTrack?.id
-            },
-          })
+        className={`p-1.5 rounded-lg transition-all duration-200 ${
+          level >= MAX_SECTION_DEPTH
+            ? "opacity-50 cursor-not-allowed bg-gray-100"
+            : "hover:bg-gray-100"
+        }`}
+        onClick={() => onAddSubsection?.(section.id)}
+        disabled={level >= MAX_SECTION_DEPTH}
+        title={
+          level >= MAX_SECTION_DEPTH
+            ? "Maximum section depth reached"
+            : "Add subsection"
         }
-        className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200"
-        title="Add Subsection"
       >
-        <Plus className="w-4 h-4" />
-        <span>Add Sub</span>
+        <Plus className="w-4 h-4 text-gray-600" />
       </button>
       <Edit
         className="w-4 h-4 mr-2 cursor-pointer"
@@ -247,7 +408,7 @@ const SectionRow = ({
               speaker: section.speaker,
               role: section.role,
               name: section.name,
-              mergedFields: section.mergedFields
+              mergedFields: section.mergedFields,
             },
           })
         }
@@ -263,7 +424,17 @@ const SectionRow = ({
 
   return (
     <>
-      <tr className={getLevelColor(level)}>
+      <tr
+        className={`
+        ${getLevelColor(level)}
+        ${level === 0 ? "font-medium text-gray-700" : "text-gray-600"}
+      `}
+      >
+        <td className="w-40 border-b border-r relative">
+          <div className="absolute inset-0 flex items-center pl-2">
+            {getLevelIndicator(level)}
+          </div>
+        </td>
         <td
           id={`${section.id}-timeSlot`}
           className={getColumnClassName("timeSlot")}
@@ -301,20 +472,22 @@ const SectionRow = ({
         </td>
       </tr>
 
-      {section.subsections?.map((subsection) => (
-        <SectionRow
-          key={subsection.id}
-          section={subsection}
-          level={level + 1}
-          showSpeakerRole={showSpeakerRole}
-          onAddSubsection={onAddSubsection}
-          onUpdateSection={onUpdateSection}
-          selection={selection}
-          onSelect={onSelect}
-          setFlyoverState={setFlyoverState}
-          activeTrack={activeTrack}
-        />
-      ))}
+      {section.subsections?.map((subsection) =>
+        level < MAX_SECTION_DEPTH ? (
+          <SectionRow
+            key={subsection.id}
+            section={subsection}
+            level={level + 1}
+            showSpeakerRole={showSpeakerRole}
+            onAddSubsection={onAddSubsection}
+            onUpdateSection={onUpdateSection}
+            selection={selection}
+            onSelect={onSelect}
+            setFlyoverState={setFlyoverState}
+            activeTrack={activeTrack}
+          />
+        ) : null
+      )}
     </>
   );
 };
@@ -326,6 +499,7 @@ function SectionList({
   setFlyoverState,
 }: SectionListProps) {
   const [headers, setHeaders] = useState<TableHeader[]>([
+    { id: "0", label: "Level", type: "indicator", isVisible: true },
     { id: "1", label: "Time", type: "time", isVisible: true },
     { id: "2", label: "Section", type: "name", isVisible: true },
     { id: "3", label: "Speaker", type: "speaker", isVisible: true },
@@ -369,23 +543,15 @@ function SectionList({
 
   const handleSelect = (
     cellIdOrSectionId: string,
-    sectionIdOrColumnType: string | number,
+    sectionId: string,
     columnType?: keyof MergedFields
   ) => {
-    const sectionId = columnType
-      ? (sectionIdOrColumnType as string)
-      : cellIdOrSectionId;
-    const actualColumnType = (columnType ||
-      sectionIdOrColumnType) as keyof MergedFields;
-    const cellId = columnType
-      ? cellIdOrSectionId
-      : `${sectionId}-${actualColumnType}`;
-
     const allSections = findAllSections(sections);
-    const targetSection = allSections.find(
-      (s) => s.id === sectionId
-    ) as SectionWithLevel;
+    const targetSection = allSections.find((s) => s.id === sectionId);
     if (!targetSection) return;
+
+    const cellId = cellIdOrSectionId;
+    const actualColumnType = columnType as keyof MergedFields;
 
     setSelection((prev) => {
       const existingSelection = prev.selectedCells.find(
@@ -402,7 +568,7 @@ function SectionList({
       if (prev.selectedCells.length > 0) {
         const firstColumnType = prev.selectedCells[0].columnType;
         if (actualColumnType !== firstColumnType) {
-          showToast.error('You can only merge cells of the same type');
+          showToast.error("You can only merge cells of the same type");
           return prev;
         }
       }
@@ -549,34 +715,34 @@ function SectionList({
 
   const handleAddSubsection = (parentId: string) => {
     if (!activeTrack) {
-      showToast.error('No active track selected');
+      showToast.error("No active track selected");
       return;
     }
 
     setFlyoverState({
       isOpen: true,
-      type: 'add-subsection',
+      type: "add-subsection",
       data: {
         parentId,
-        trackId: activeTrack.id
-      }
+        trackId: activeTrack.id,
+      },
     });
   };
 
   const handleAddSection = () => {
     if (!activeTrack) {
-      showToast.error('No active track selected');
+      showToast.error("No active track selected");
       return;
     }
 
     setFlyoverState({
       isOpen: true,
       type: "add-section",
-      data: { 
+      data: {
         trackId: activeTrack.id,
         parentId: null,
-        sectionType: 'program'
-      }
+        sectionType: "program",
+      },
     });
   };
 
@@ -743,7 +909,6 @@ function SectionList({
             ) : (
               <Maximize2 className="w-4 h-4 transform group-hover:scale-110 transition-transform" />
             )}
-           
           </button>
 
           {/* Table Selection Button */}
@@ -769,15 +934,17 @@ function SectionList({
 
           {/* Settings Button with Rotation Animation */}
           <button
-            onClick={() => setFlyoverState({
-              isOpen: true,
-              type: "header-settings",
-              data: {
-                headers,
-                onUpdateHeaders: setHeaders,
-                onApplyStyles: setTableStyles
-              }
-            })}
+            onClick={() =>
+              setFlyoverState({
+                isOpen: true,
+                type: "header-settings",
+                data: {
+                  headers,
+                  onUpdateHeaders: setHeaders,
+                  onApplyStyles: setTableStyles,
+                },
+              })
+            }
             className="p-2 rounded-lg text-gray-600 hover:text-blue-600 
               hover:bg-blue-50/80 transition-all duration-200 group relative"
           >
@@ -787,7 +954,7 @@ function SectionList({
 
         {/* Action Button */}
         {selection.isSelecting ? (
-          <SelectionIndicator  />
+          <SelectionIndicator />
         ) : (
           <button
             onClick={handleAddSection}
@@ -826,158 +993,242 @@ function SectionList({
       className={`
       ${
         isFullScreen
-          ? "fixed inset-0 z-50 bg-white flex flex-col h-screen w-screen overflow-hidden"
-          : "relative flex flex-col"
+          ? "fixed inset-0 z-50 bg-white overflow-auto"
+          : "relative flex flex-col h-full"
       }
     `}
     >
-      {/* Header */}
-      <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 mb-6">
-        <div className="p-4">
-          {activeTrack && (
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              {/* Track Info - Left */}
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <h2 className="relative group">
-                    <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-violet-500 to-purple-600 
-                      bg-clip-text text-transparent inline-flex items-center gap-2">
-                      <span className="whitespace-nowrap">Track :</span>
-                      <span className="font-semibold text-nowrap text-ellipsis overflow-hidden">
-                        {activeTrack.name}
+      <div
+        className={`
+        ${isFullScreen ? "min-h-screen" : "h-full"} 
+        flex flex-col
+      `}
+      >
+        {/* Header */}
+        <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50 mb-6">
+          <div className="p-4">
+            {activeTrack && (
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                {/* Track Info - Left */}
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <h2 className="relative group">
+                      <span
+                        className="text-xl font-bold bg-gradient-to-r from-blue-600 via-violet-500 to-purple-600 
+                      bg-clip-text text-transparent inline-flex items-center gap-2"
+                      >
+                        <span className="whitespace-nowrap">Track :</span>
+                        <span className="font-semibold text-nowrap text-ellipsis overflow-hidden">
+                          {activeTrack.name}
+                        </span>
                       </span>
-                    </span>
-                    {/* Animated underline effect */}
-                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 via-violet-500 
-                      to-purple-600 group-hover:w-full transition-all duration-300" />
-                  </h2>
-                  
-                  {/* Optional: Add a decorative element */}
-                  <div className="hidden sm:block w-2 h-2 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 
-                    animate-pulse" />
-                </div>
-                
-                <div className="flex w-full flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
-                  <div className="flex min-w-40 md:w-auto items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
-                    <Clock className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm text-gray-600">
-                      {new Date(activeTrack.startDate).toLocaleDateString()} -
-                      {new Date(activeTrack.endDate).toLocaleDateString()}
-                    </span>
+                      {/* Animated underline effect */}
+                      <span
+                        className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 via-violet-500 
+                      to-purple-600 group-hover:w-full transition-all duration-300"
+                      />
+                    </h2>
+
+                    {/* Optional: Add a decorative element */}
+                    <div
+                      className="hidden sm:block w-2 h-2 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 
+                    animate-pulse"
+                    />
                   </div>
-                  <div className="flex md:flex-row md:w-auto items-center gap-2 bg-violet-50 px-3 py-1.5 rounded-lg">
-                    <Layers className="w-4 h-4 text-violet-500" />
-                    <span className="text-sm text-gray-600 flex-nowrap min-w-20">
-                      {activeTrack.sections.length} sections
-                    </span>
+
+                  <div className="flex w-full flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
+                    <div className="flex min-w-40 md:w-auto items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
+                      <Clock className="w-4 h-4 text-blue-500" />
+                      <span className="text-sm text-gray-600">
+                        {new Date(activeTrack.startDate).toLocaleDateString()} -
+                        {new Date(activeTrack.endDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex md:flex-row md:w-auto items-center gap-2 bg-violet-50 px-3 py-1.5 rounded-lg">
+                      <Layers className="w-4 h-4 text-violet-500" />
+                      <span className="text-sm text-gray-600 flex-nowrap min-w-20">
+                        {activeTrack.sections.length} sections
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Actions - Right */}
-              <div className="flex items-center gap-3">
-                <ControlButtons />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Search and Filters */}
-        <div className="border-t border-gray-100 relative">
-          <div className="p-4 bg-gradient-to-r from-gray-50/80 to-white/60 backdrop-blur-sm">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-              {/* Calendar Filter */}
-              <div className="w-full sm:w-auto">
-                <div className="relative transform transition-all duration-200 hover:scale-[1.02]">
-                  <SectionCalendarFilter
-                    sections={sections}
-                    onFilterChange={setSectionFilter}
-                    activeFilter={sectionFilter}
-                  />
-                  {/* Improved Highlight Effect */}
-                  <div 
-                    className="absolute inset-0 rounded-lg pointer-events-none"
-                    style={{
-                      background: 'linear-gradient(90deg, rgba(96, 165, 250, 0) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(96, 165, 250, 0) 100%)',
-                      opacity: 0,
-                      transition: 'opacity 300ms ease-in-out'
-                    }}
-                  />
+                {/* Actions - Right */}
+                <div className="flex items-center gap-3">
+                  <ControlButtons />
                 </div>
-                
-               
               </div>
+            )}
+          </div>
 
-              {/* Enhanced Search Bar */}
-              <div className="relative flex-1 group">
-                <div className="relative transform transition-all duration-200">
-                  <input
-                    type="text"
-                    placeholder="Search sections..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2.5 text-sm bg-white rounded-xl border border-gray-200 
+          {/* Search and Filters */}
+          <div className="border-t border-gray-100 relative hidden">
+            <div className="p-4 bg-gradient-to-r from-gray-50/80 to-white/60 backdrop-blur-sm">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                {/* Calendar Filter */}
+                <div className="w-full sm:w-auto">
+                  <div className="relative transform transition-all duration-200 hover:scale-[1.02]">
+                    <SectionCalendarFilter
+                      sections={sections}
+                      onFilterChange={setSectionFilter}
+                      activeFilter={sectionFilter}
+                    />
+                    {/* Improved Highlight Effect */}
+                    <div
+                      className="absolute inset-0 rounded-lg pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(96, 165, 250, 0) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(96, 165, 250, 0) 100%)",
+                        opacity: 0,
+                        transition: "opacity 300ms ease-in-out",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Enhanced Search Bar */}
+                <div className="relative flex-1 group">
+                  <div className="relative transform transition-all duration-200">
+                    <input
+                      type="text"
+                      placeholder="Search sections..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-10 py-2.5 text-sm bg-white rounded-xl border border-gray-200 
                       focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 
                       placeholder-gray-400 transition-all duration-200 group-hover:shadow-md"
-                  />
-                  <Search
-                    className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 
+                    />
+                    <Search
+                      className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 
                     transition-colors duration-200 group-hover:text-blue-500"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full 
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full 
                         hover:bg-gray-100 text-gray-400 hover:text-gray-600 
                         transition-all duration-200 hover:rotate-90"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  {searchQuery && (
+                    <div className="absolute right-0 mt-1 text-xs text-gray-500">
+                      {filteredSections.reduce(
+                        (count, group) => count + group.sections.length,
+                        0
+                      )}{" "}
+                      results found
+                    </div>
                   )}
                 </div>
-                {searchQuery && (
-                  <div className="absolute right-0 mt-1 text-xs text-gray-500">
-                    {filteredSections.reduce(
-                      (count, group) => count + group.sections.length,
-                      0
-                    )}{" "}
-                    results found
-                  </div>
-                )}
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-4 overflow-hidden">
-        <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow h-full flex flex-col">
-          <div className="overflow-auto flex-1  min-h-[65vh] ">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="sticky top-0 bg-white z-10">
-                <tr>{tableHeaders}</tr>
-              </thead>
-              <tbody>
-                {filteredSections.map((group, groupIndex) => (
-                  <React.Fragment key={groupIndex}>
-                    {group.sections.map((section) => (
-                      <SectionRow
-                        key={section.id}
-                        section={section}
-                        showSpeakerRole={headers.find((h) => h.type === "speaker")?.isVisible}
-                        onAddSubsection={handleAddSubsection}
-                        onUpdateSection={onUpdateSection}
-                        selection={selection}
-                        onSelect={handleSelect}
-                        setFlyoverState={setFlyoverState}
-                        activeTrack={activeTrack}
+        <div className="flex-1 p-4 pb-10 sticky top-0">
+          <div className="rounded-xl border border-gray-200 bg-white h-full overflow-hidden shadow-sm ">
+            {/* Enhanced Search and Filters Bar */}
+            <div className="border-b border-gray-100 bg-white/95 sticky top-0 z-20 backdrop-blur-md">
+              <div className="p-3 bg-gradient-to-r from-slate-50/90 to-white/80">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                  {/* Left Side Controls */}
+                  <div className="flex items-center gap-3">
+                    {/* Timeline Toggle */}
+                    <button className="p-2 rounded-lg hover:bg-gray-50 text-gray-600 border border-gray-100">
+                      <Clock className="w-4 h-4" />
+                    </button>
+
+                    {/* View Options Dropdown */}
+                    <select className="px-3 py-2 min-w-36 rounded-lg border border-gray-200 text-sm bg-white hover:bg-gray-50 cursor-pointer">
+                      <option>Timeline View</option>
+                      <option>Table View</option>
+                      <option>Gantt View</option>
+                    </select>
+                  </div>
+
+                  {/* Center - Calendar Filter */}
+                  <div className="flex-1 max-w-md">
+                    <div className="relative transform transition-all duration-200 hover:scale-[1.02]">
+                      <SectionCalendarFilter
+                        sections={sections}
+                        onFilterChange={setSectionFilter}
+                        activeFilter={sectionFilter}
                       />
-                    ))}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+
+                  {/* Right - Search Bar */}
+                  <div className="relative flex-1 max-w-sm">
+                    <div className="relative group">
+                      <input
+                        type="text"
+                        placeholder="Search sections..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-10 py-2.5 text-sm bg-white/50 rounded-xl border border-gray-200
+                          focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30
+                          placeholder-gray-400 transition-all duration-200 group-hover:shadow-md
+                          backdrop-blur-sm"
+                      />
+                      <Search
+                        className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2
+                        transition-colors duration-200 group-hover:text-blue-500"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full
+                            hover:bg-gray-100 text-gray-400 hover:text-gray-600
+                            transition-all duration-200 hover:rotate-90"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Table Container with Timeline */}
+            <div className="flex">
+              {/* Main Table */}
+              <div className="flex-1 overflow-hidden">
+                <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow h-full flex flex-col">
+                  <div className="overflow-auto flex-1  min-h-[65vh] ">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="sticky top-0 bg-white z-10">
+                        <tr>{tableHeaders}</tr>
+                      </thead>
+                      <tbody>
+                        {filteredSections.map((group) =>
+                          group.sections.map((section) => (
+                            <React.Fragment key={section.id}>
+                              <SectionRow
+                                section={section}
+                                showSpeakerRole={
+                                  headers.find((h) => h.type === "speaker")
+                                    ?.isVisible
+                                }
+                                onAddSubsection={handleAddSubsection}
+                                onUpdateSection={onUpdateSection}
+                                selection={selection}
+                                onSelect={handleSelect}
+                                setFlyoverState={setFlyoverState}
+                                activeTrack={activeTrack}
+                              />
+                            </React.Fragment>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

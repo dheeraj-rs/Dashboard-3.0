@@ -21,12 +21,93 @@ function FlyoverPanel({
 }: FlyoverPanelProps) {
   return (
     <>
-      {/* Backdrop with blur effect */}
+      {/* Exploding Glass Effect Backdrop */}
       <div 
-        className={`fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 z-[89] 
-          ${flyoverState.isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 transition-all duration-500 z-[89]
+          perspective-[2000px] overflow-hidden
+          ${flyoverState.isOpen 
+            ? 'opacity-90' 
+            : 'opacity-0 pointer-events-none'
+          }
+        `}
         onClick={() => setFlyoverState({ isOpen: false, type: null, data: null })}
-      />
+      >
+        {/* Enhanced Base Glass Layer with Shadow */}
+        <div 
+          className={`absolute inset-0 bg-gradient-to-br from-black/5 via-black/1 to-transparent
+            backdrop-blur-[8px] transition-all duration-500 transform-gpu
+            shadow-[inset_0_0_100px_rgba(255,255,255,0.1)]
+            ${flyoverState.isOpen ? 'scale-100' : 'scale-125 rotate-12'}
+          `}
+        />
+
+        {/* Improved Exploding Glass Shards */}
+        <div 
+          className={`absolute inset-0 grid grid-cols-5 grid-rows-5
+            transform-gpu transition-all duration-1000
+            ${flyoverState.isOpen ? 'scale-100' : 'scale-150'}
+          `}
+        >
+          {[...Array(25)].map((_, i) => {
+            const randomX = (Math.random() - 0.5) * 300;
+            const randomY = (Math.random() - 0.5) * 300;
+            const randomRotate = (Math.random() - 0.5) * 360;
+            const randomScale = 0.3 + Math.random() * 0.7;
+            
+            return (
+              <div
+                key={i}
+                className={`relative overflow-hidden backdrop-blur-[6px]
+                  before:absolute before:inset-0 
+                  before:bg-gradient-to-br before:from-white/10 before:via-transparent before:to-black/5
+                  after:absolute after:inset-0 
+                  after:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent)]
+                  transition-all duration-1000 ease-out
+                  transform-gpu origin-center
+                  hover:z-10 hover:scale-125 hover:rotate-0
+                  group cursor-pointer
+                  shadow-[0_0_15px_rgba(255,255,255,0.1)]
+                  hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]
+                `}
+                style={{
+                  transitionDelay: `${i * 40}ms`,
+                  transform: flyoverState.isOpen 
+                    ? 'translate(0, 0) rotate(0) scale(1)'
+                    : `translate(${randomX}px, ${randomY}px) rotate(${randomRotate}deg) scale(${randomScale})`
+                }}
+              >
+                {/* Enhanced Shard Shine Effect */}
+                <div 
+                  className={`absolute inset-0 opacity-0 group-hover:opacity-100
+                    bg-gradient-to-tr from-white/20 via-white/10 to-transparent
+                    transition-all duration-700 transform rotate-45 
+                    group-hover:rotate-180 group-hover:scale-150
+                    ${flyoverState.isOpen ? 'scale-100' : 'scale-0'}
+                  `}
+                />
+                
+                {/* Additional Inner Glow Effect */}
+                <div 
+                  className={`absolute inset-0 opacity-0 group-hover:opacity-100
+                    bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_70%)]
+                    transition-all duration-1000 delay-200
+                    group-hover:scale-200
+                  `}
+                />
+
+                {/* Shimmer Animation */}
+                <div 
+                  className={`absolute inset-0 opacity-0 group-hover:opacity-100
+                    bg-gradient-to-r from-transparent via-white/15 to-transparent
+                    -translate-x-full group-hover:translate-x-full
+                    transition-all duration-1500 ease-in-out
+                  `}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <aside
         className={`

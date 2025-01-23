@@ -102,16 +102,21 @@ export interface SectionRowProps {
   onAddSubsection?: (sectionId: string) => void;
   onUpdateSection: (sectionId: string, updates: Partial<Section>) => void;
   selection?: SelectionState;
-  onSelect?: (sectionId: string, columnType: keyof MergedFields) => void;
+  onSelect?: (
+    cellId: string,
+    sectionId: string, 
+    columnType: keyof MergedFields
+  ) => void;
   setFlyoverState: (state: FlyoverState) => void;
   activeTrack: Track | null;
   sectionTypes?: SectionManagementItem[];
+  
 }
 
 export interface TableHeader {
   id: string;
   label: string;
-  type: 'time' | 'name' | 'speaker' | 'role' | 'actions';
+  type: 'indicator' | 'time' | 'name' | 'speaker' | 'role' | 'actions';
   isVisible: boolean;
 }
 
@@ -135,15 +140,6 @@ export interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-}
-
-
-
-export interface TableHeader {
-  id: string;
-  label: string;
-  type: 'time' | 'name' | 'speaker' | 'role' | 'actions';
-  isVisible: boolean;
 }
 
 export interface HeaderSettingsModalProps {
