@@ -1,7 +1,7 @@
 import  { useState } from 'react';
 import Modal from './Modal';
-import { ColorSelectionModalProps } from '../../types/scheduler';
 import { Check } from 'lucide-react';
+import { ColorSelectionModalProps } from '../../types/common';
 
 const colorOptions = [
   { name: 'Blue', class: 'bg-blue-100', hover: 'hover:bg-blue-200' },

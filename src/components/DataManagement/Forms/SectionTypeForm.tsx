@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { SectionManagementItem, SectionTypeFormProps } from '../../../types/scheduler';
 import { ChevronRight } from 'lucide-react';
+import { SectionManagementItem, SectionTypeFormProps } from '../../../types/sections';
 
 const SECTION_TYPE_CATEGORIES = [
   { value: 'program' as const, label: 'Program Session', icon: '🎯' },
@@ -10,7 +10,15 @@ const SECTION_TYPE_CATEGORIES = [
   { value: 'other' as const, label: 'Other', icon: '📌' },
 ];
 
-export const SectionTypeForm: React.FC<SectionTypeFormProps> = ({ initialData, onSubmit }) => {
+const SUBSECTION_TYPE_CATEGORIES = [
+  { value: 'presentation' as const, label: 'Presentation', icon: '📊' },
+  { value: 'discussion' as const, label: 'Discussion', icon: '💭' },
+  { value: 'workshop' as const, label: 'Workshop', icon: '🛠️' },
+  { value: 'qa' as const, label: 'Q&A Session', icon: '❓' },
+  { value: 'other' as const, label: 'Other', icon: '📌' },
+];
+
+export const SectionTypeForm: React.FC<SectionTypeFormProps> = ({ initialData, onSubmit, isSubsection }) => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<SectionManagementItem>>({
     name: initialData?.name ?? '',
@@ -23,6 +31,8 @@ export const SectionTypeForm: React.FC<SectionTypeFormProps> = ({ initialData, o
     color: initialData?.color ?? '#000000'
   });
 
+  const typeCategories = isSubsection ? SUBSECTION_TYPE_CATEGORIES : SECTION_TYPE_CATEGORIES;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -31,9 +41,11 @@ export const SectionTypeForm: React.FC<SectionTypeFormProps> = ({ initialData, o
   if (!selectedType && !initialData) {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Select Section Type</h3>
+        <h3 className="text-lg font-medium text-gray-900">
+          {isSubsection ? 'Select Subsection Type' : 'Select Section Type'}
+        </h3>
         <div className="grid grid-cols-1 gap-3">
-          {SECTION_TYPE_CATEGORIES.map((type) => (
+          {typeCategories.map((type) => (
             <button
               key={type.value}
               onClick={() => {
@@ -47,7 +59,9 @@ export const SectionTypeForm: React.FC<SectionTypeFormProps> = ({ initialData, o
                 <span className="text-2xl">{type.icon}</span>
                 <div className="text-left">
                   <h4 className="font-medium text-gray-900">{type.label}</h4>
-                  <p className="text-sm text-gray-500">Create a new {type.label.toLowerCase()} section</p>
+                  <p className="text-sm text-gray-500">
+                    Create a new {isSubsection ? 'subsection' : 'section'} for {type.label.toLowerCase()}
+                  </p>
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 
@@ -58,7 +72,6 @@ export const SectionTypeForm: React.FC<SectionTypeFormProps> = ({ initialData, o
       </div>
     );
   }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 gap-6">
@@ -96,7 +109,6 @@ export const SectionTypeForm: React.FC<SectionTypeFormProps> = ({ initialData, o
             </div>
           </>
         )}
-
         <div>
           <label className="block text-sm font-medium text-gray-700">Description</label>
           <textarea

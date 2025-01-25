@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import debounce from 'lodash/debounce';
-import { DashboardLayoutProps } from '../types/scheduler';
+import { DashboardLayoutProps } from "../types/common";
 
 export default function DashboardLayout({
   children,

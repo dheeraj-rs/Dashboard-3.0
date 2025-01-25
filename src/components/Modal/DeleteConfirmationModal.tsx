@@ -1,6 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
-import { DeleteConfirmationModalProps } from '../../types/scheduler';
+import { DeleteConfirmationModalProps } from '../../types/common';
 
 export default function DeleteConfirmationModal({
   isOpen,

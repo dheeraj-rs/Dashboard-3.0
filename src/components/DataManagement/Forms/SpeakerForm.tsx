@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { SpeakerFormProps, SpeakerManagementItem } from '../../../types/scheduler';
 import { Plus, X } from 'lucide-react';
+import { SpeakerManagementItem, SpeakerFormProps } from '../../../types/management';
 
 export const SpeakerForm: React.FC<SpeakerFormProps> = ({ initialData, onSubmit }) => {
   const [formData, setFormData] = useState<Partial<SpeakerManagementItem>>(

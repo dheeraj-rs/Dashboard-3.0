@@ -1,7 +1,18 @@
-import React, { useState } from "react";
-import { HeaderSettingsModalProps } from '../../types/scheduler';
-import { Trash2 } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "../Modal/Alert";
+import React, { useState, useCallback, useMemo } from "react";
+import { RefreshCw, Layout, Type, Grid, Palette, Eye, EyeOff } from 'lucide-react';
+import { HeaderSettingsState, HeaderSettingsModalProps } from "../../types/common";
+import { BorderStyle, TableHeader } from "../../types/ui";
+
+
+
+const calculateTextColor = (backgroundColor: string): string => {
+  const hex = backgroundColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#000000' : '#ffffff';
+};
 
 const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
   isOpen,
@@ -9,315 +20,379 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
   headers,
   onUpdateHeaders,
   onApplyStyles,
+  currentStyles,
 }) => {
+  const [activeTab, setActiveTab] = useState<'headers' | 'styles'>('headers');
   const [localHeaders, setLocalHeaders] = useState(headers);
-  const [headerColor, setHeaderColor] = useState("#f3f4f6");
-  const [textColor, setTextColor] = useState("#374151");
-  const [borderColor, setBorderColor] = useState("#e5e7eb");
-  const [columnColors, setColumnColors] = useState<{ [key: string]: string }>({});
-  const [sectionColors, setSectionColors] = useState<{ [key: string]: string }>({});
-  const [subsectionColors, setSubsectionColors] = useState<{ [key: string]: string }>({});
-  const [mergedItemColors, setMergedItemColors] = useState<{ [key: string]: string }>({});
-  const [showAddItemAlert, setShowAddItemAlert] = useState(false);
-  const [newItemType, setNewItemType] = useState<"section" | "subsection" | "mergedItem">("section");
-  const [newItemName, setNewItemName] = useState("");
+  const [styles, setStyles] = useState<HeaderSettingsState>({
+    tableBackgroundColor: currentStyles?.tableBackgroundColor || "#ffffff",
+    headerColor: currentStyles?.headerColor || "#f3f4f6",
+    headerTextColor: currentStyles?.headerTextColor || "#374151",
+    cellTextColor: currentStyles?.cellTextColor || "#374151",
+    borderColor: currentStyles?.borderColor || "#e5e7eb",
+    headerBorderStyle: currentStyles?.headerBorderStyle || "solid",
+    cellBorderStyle: currentStyles?.cellBorderStyle || "solid",
+    alternateRowColors: currentStyles?.alternateRowColors || false,
+    alternateRowColor: currentStyles?.alternateRowColor || "#f9fafb",
+    cellBorderColor: currentStyles?.cellBorderColor || "#e5e7eb",
+    mainSectionGradientStart: currentStyles?.mainSectionGradientStart || "#E2E8F0",
+    mainSectionGradientEnd: currentStyles?.mainSectionGradientEnd || "#FFFFFF",
+  });
 
-  const handleHeaderLabelChange = (id: string, newLabel: string) => {
+  const defaultStyles: HeaderSettingsState = useMemo(() => ({
+    headerColor: "#f3f4f6",
+    tableBackgroundColor: "#ffffff",
+    headerTextColor: "#374151",
+    cellTextColor: "#374151",
+    borderColor: "#e5e7eb",
+    cellBorderColor: "#e5e7eb",
+    headerBorderStyle: "solid" as BorderStyle,
+    cellBorderStyle: "solid" as BorderStyle,
+    alternateRowColors: false,
+    alternateRowColor: "#f9fafb",
+    mainSectionGradientStart: "#E2E8F0",
+    mainSectionGradientEnd: "#FFFFFF",
+  }), []);
+
+  const borderStyles: BorderStyle[] = useMemo(() => [
+    "none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"
+  ], []);
+
+  const handleHeaderLabelChange = useCallback((id: string, newLabel: string) => {
     setLocalHeaders((prev) =>
       prev.map((header) =>
         header.id === id ? { ...header, label: newLabel } : header
       )
     );
-  };
+  }, []);
 
-  const handleColumnColorChange = (columnType: string, color: string) => {
-    setColumnColors((prev) => ({ ...prev, [columnType]: color }));
-  };
+  const handleHeaderVisibilityChange = useCallback((id: string) => {
+    setLocalHeaders((prev) =>
+      prev.map((header) =>
+        header.id === id ? { ...header, isVisible: !header.isVisible } : header
+      )
+    );
+  }, []);
 
-  const handleSectionColorChange = (sectionId: string, color: string) => {
-    setSectionColors((prev) => ({ ...prev, [sectionId]: color }));
-  };
+  const validateColor = useCallback((color: string): boolean => {
+    return /^#[0-9A-F]{6}$/i.test(color);
+  }, []);
 
-  const handleSubsectionColorChange = (subsectionId: string, color: string) => {
-    setSubsectionColors((prev) => ({ ...prev, [subsectionId]: color }));
-  };
-
-  const handleMergedItemColorChange = (itemName: string, color: string) => {
-    setMergedItemColors((prev) => ({ ...prev, [itemName]: color }));
-  };
-
-  const handleDeleteSection = (sectionId: string) => {
-    setSectionColors((prev) => {
-      const newSectionColors = { ...prev };
-      delete newSectionColors[sectionId];
-      return newSectionColors;
-    });
-  };
-
-  const handleDeleteSubsection = (subsectionId: string) => {
-    setSubsectionColors((prev) => {
-      const newSubsectionColors = { ...prev };
-      delete newSubsectionColors[subsectionId];
-      return newSubsectionColors;
-    });
-  };
-
-  const handleDeleteMergedItem = (itemName: string) => {
-    setMergedItemColors((prev) => {
-      const newMergedItemColors = { ...prev };
-      delete newMergedItemColors[itemName];
-      return newMergedItemColors;
-    });
-  };
-
-  const handleAddItem = () => {
-    if (!newItemName.trim()) {
+  const handleStyleChange = useCallback((key: keyof HeaderSettingsState, value: any) => {
+    if (key.includes('Color') && !validateColor(value)) {
+      console.warn('Invalid color value:', value);
       return;
     }
 
-    switch (newItemType) {
-      case "section":
-        handleSectionColorChange(newItemName, "#f9fafb");
-        break;
-      case "subsection":
-        handleSubsectionColorChange(newItemName, "#f9fafb");
-        break;
-      case "mergedItem":
-        handleMergedItemColorChange(newItemName, "#f9fafb");
-        break;
-      default:
-        break;
-    }
-
-    setNewItemName("");
-    setShowAddItemAlert(false);
-  };
-
-  const handleApply = () => {
-    onUpdateHeaders(localHeaders);
-    onApplyStyles({
-      headerColor,
-      textColor,
-      borderColor,
-      columnColors,
-      sectionColors,
-      subsectionColors,
-      mergedItemColors,
+    setStyles((prev) => {
+      const updates: Partial<HeaderSettingsState> = { [key]: value };
+      if (key === 'headerColor') {
+        updates.headerTextColor = calculateTextColor(value);
+      }
+      if (key === 'tableBackgroundColor') {
+        updates.cellTextColor = calculateTextColor(value);
+      }
+      return { ...prev, ...updates };
     });
+  }, [validateColor]);
+
+  const handleSave = useCallback(() => {
+    onApplyStyles({
+      ...styles,
+      tableBackgroundColor: styles.tableBackgroundColor || "#ffffff",
+      mainSectionGradientStart: styles.mainSectionGradientStart || "#93c5fd80",
+      mainSectionGradientEnd: styles.mainSectionGradientEnd || "#FFFFFF",
+      alternateRowColors: styles.alternateRowColors,
+      alternateRowColor: styles.alternateRowColor || "#f9fafb",
+      cellTextColor: styles.cellTextColor || "#374151",
+    });
+    onUpdateHeaders(localHeaders);
     onClose();
-  };
+  }, [onApplyStyles, styles, localHeaders, onUpdateHeaders, onClose]);
+
+  const handleReset = useCallback(() => {
+    setStyles(defaultStyles);
+    setLocalHeaders(headers);
+  }, [defaultStyles, headers]);
+
+  const StyleSection = React.memo(({ icon: Icon, title, children }: any) => (
+    <div className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 
+      shadow-sm hover:shadow-md transition-all duration-300 hover:border-gray-300">
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className="w-5 h-5 text-gray-500" />
+        <label className="block text-sm font-medium text-gray-700">
+          {title}
+        </label>
+      </div>
+      {children}
+    </div>
+  ));
+
+  const TabButton = React.memo(({ tab, label, icon: Icon }: { 
+    tab: 'headers' | 'styles', 
+    label: string, 
+    icon: any 
+  }) => (
+    <button
+      onClick={() => setActiveTab(tab)}
+      className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium rounded-lg
+        transition-all duration-200 ${
+        activeTab === tab
+          ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-md'
+          : 'text-gray-600 hover:bg-gray-50'
+      }`}
+    >
+      <Icon className={`w-4 h-4 ${activeTab === tab ? 'text-white' : 'text-gray-500'}`} />
+      {label}
+    </button>
+  ));
+
+  const HeaderItem = React.memo(({ header }: { header: TableHeader }) => (
+    <div className="group flex items-center gap-3 p-3 bg-gradient-to-r from-gray-50 to-white 
+      rounded-lg border border-gray-200 shadow-sm hover:shadow-md 
+      transition-all duration-300 hover:border-gray-300">
+      <div className="flex-1 flex items-center gap-2">
+        <span className="text-xs font-medium text-gray-500">{header.type}</span>
+        <input
+          type="text"
+          value={header.label}
+          onChange={(e) => handleHeaderLabelChange(header.id, e.target.value)}
+          className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded-md
+            focus:ring-1 focus:ring-violet-500 focus:border-violet-500
+            transition-all duration-200 bg-white/50 hover:bg-white"
+        />
+      </div>
+      <button
+        onClick={() => handleHeaderVisibilityChange(header.id)}
+        className="p-1 rounded-md hover:bg-gray-100 transition-colors group"
+        title={header.isVisible ? "Hide Column" : "Show Column"}
+      >
+        {header.isVisible ? (
+          <Eye className="w-4 h-4 text-gray-500 group-hover:text-violet-600" />
+        ) : (
+          <EyeOff className="w-4 h-4 text-gray-400 group-hover:text-violet-600" />
+        )}
+      </button>
+    </div>
+  ));
 
   if (!isOpen) return null;
 
   return (
-   <>
-     {/* Modal Header */}
-          {/* Header Label Customization */}
-          <section className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Header Labels</h3>
-              <div className="space-y-3">
-                {localHeaders.map((header) => (
-                  <div key={header.id} className="group flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm transition-shadow hover:shadow-md">
-                    <span className="text-sm font-medium text-gray-700">{header.type}</span>
-                    <input
-                      type="text"
-                      value={header.label}
-                      onChange={(e) => handleHeaderLabelChange(header.id, e.target.value)}
-                      className="flex-1 rounded-md border-gray-300 bg-gray-50 px-3 py-1.5 text-sm transition-colors focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200"
-                    />
-                    <input
-                      type="color"
-                      value={columnColors[header.type] || "#f9fafb"}
-                      onChange={(e) => handleColumnColorChange(header.type, e.target.value)}
-                      className="h-8 w-8 cursor-pointer rounded-md border-2 border-gray-200"
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
+    <div 
+      className="h-full flex flex-col"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="header-settings-title"
+    >
+      <div className="px-4 pt-3 border-b">
+        <h2 id="header-settings-title" className="sr-only">Header Settings</h2>
+        <div className="flex gap-1 mb-3">
+          <TabButton tab="headers" label="Headers" icon={Type} />
+          <TabButton tab="styles" label="Styles" icon={Layout} />
+        </div>
+      </div>
 
-            {/* Colors Section */}
-            <section className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Colors</h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {[
-                  { label: "Header Color", value: headerColor, onChange: setHeaderColor },
-                  { label: "Text Color", value: textColor, onChange: setTextColor },
-                  { label: "Border Color", value: borderColor, onChange: setBorderColor },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-lg border bg-white p-3 shadow-sm">
-                    <label className="block text-sm font-medium text-gray-700">{item.label}</label>
-                    <input
-                      type="color"
-                      value={item.value}
-                      onChange={(e) => item.onChange(e.target.value)}
-                      className="mt-2 h-8 w-full cursor-pointer rounded-md"
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Sections & Subsections */}
-            <section className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Sections & Subsections</h3>
-              <div className="space-y-3">
-                {Object.entries(sectionColors).map(([sectionId, color]) => (
-                  <div key={sectionId} className="group flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm transition-all hover:shadow-md">
-                    <span className="text-sm font-medium text-gray-700">Section {sectionId}</span>
-                    <input
-                      type="color"
-                      value={color}
-                      onChange={(e) => handleSectionColorChange(sectionId, e.target.value)}
-                      className="h-8 w-8 cursor-pointer rounded-md border-2 border-gray-200"
-                    />
-                    <button
-                      onClick={() => handleDeleteSection(sectionId)}
-                      className="ml-auto rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-                {Object.entries(subsectionColors).map(([subsectionId, color]) => (
-                  <div key={subsectionId} className="group flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm transition-all hover:shadow-md">
-                    <span className="text-sm font-medium text-gray-700">Subsection {subsectionId}</span>
-                    <input
-                      type="color"
-                      value={color}
-                      onChange={(e) => handleSubsectionColorChange(subsectionId, e.target.value)}
-                      className="h-8 w-8 cursor-pointer rounded-md border-2 border-gray-200"
-                    />
-                    <button
-                      onClick={() => handleDeleteSubsection(subsectionId)}
-                      className="ml-auto rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setNewItemType("section");
-                      setShowAddItemAlert(true);
-                    }}
-                    className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    Add Section
-                  </button>
-                  <button
-                    onClick={() => {
-                      setNewItemType("subsection");
-                      setShowAddItemAlert(true);
-                    }}
-                    className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    Add Subsection
-                  </button>
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-4">
+          {activeTab === 'headers' && (
+            <div className="space-y-2">
+              {localHeaders.map((header) => (
+                <HeaderItem key={header.id} header={header} />
+              ))}
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-blue-600">
+                  <Eye className="w-4 h-4" />
+                  <span>Toggle column visibility</span>
                 </div>
               </div>
-            </section>
+            </div>
+          )}
 
-            {/* Merged Items */}
-            <section className="space-y-4 pb-24">
-              <h3 className="text-lg font-medium text-gray-900">Merged Items</h3>
-              <div className="space-y-3">
-                {Object.entries(mergedItemColors).map(([itemName, color]) => (
-                  <div key={itemName} className="group flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm transition-all hover:shadow-md">
-                    <span className="text-sm font-medium text-gray-700">{itemName}</span>
+          {activeTab === 'styles' && (
+            <div className="space-y-3">
+              <StyleSection icon={Palette} title="Colors">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Header Background</label>
+                    <div className="space-y-2">
+                      <input
+                        type="color"
+                        value={styles.headerColor}
+                        onChange={(e) => handleStyleChange('headerColor', e.target.value)}
+                        className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
+                      />
+                      <div 
+                        className="p-2 rounded text-center text-sm"
+                        style={{ 
+                          backgroundColor: styles.headerColor,
+                          color: styles.headerTextColor 
+                        }}
+                      >
+                        Sample Header Text
+                      </div>
+                    </div>
+                  </div>
+                  {/* <div>
+                    <label className="block text-sm text-gray-600 mb-2">Cell Background</label>
+                    <div className="space-y-2">
+                      <input
+                        type="color"
+                        value={styles.tableBackgroundColor}
+                        onChange={(e) => handleStyleChange('tableBackgroundColor', e.target.value)}
+                        className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
+                      />
+                      <div 
+                        className="p-2 rounded text-center text-sm"
+                        style={{ 
+                          backgroundColor: styles.tableBackgroundColor,
+                          color: styles.cellTextColor 
+                        }}
+                      >
+                        Sample Cell Text
+                      </div>
+                    </div>
+                  </div> */}
+                </div>
+              </StyleSection>
+
+              <StyleSection icon={Grid} title="Borders">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Header Border Color</label>
                     <input
                       type="color"
-                      value={color}
-                      onChange={(e) => handleMergedItemColorChange(itemName, e.target.value)}
-                      className="h-8 w-8 cursor-pointer rounded-md border-2 border-gray-200"
+                      value={styles.borderColor}
+                      onChange={(e) => handleStyleChange('borderColor', e.target.value)}
+                      className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
                     />
-                    <button
-                      onClick={() => handleDeleteMergedItem(itemName)}
-                      className="ml-auto rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
                   </div>
-                ))}
-                <button
-                  onClick={() => {
-                    setNewItemType("mergedItem");
-                    setShowAddItemAlert(true);
-                  }}
-                  className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  Add Merged Item
-                </button>
-              </div>
-            </section>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Cell Border Color</label>
+                    <input
+                      type="color"
+                      value={styles.cellBorderColor}
+                      onChange={(e) => handleStyleChange('cellBorderColor', e.target.value)}
+                      className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Header Border Style</label>
+                    <select
+                      value={styles.headerBorderStyle}
+                      onChange={(e) => handleStyleChange('headerBorderStyle', e.target.value as BorderStyle)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm 
+                        focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                        transition-all duration-200 bg-white/50 hover:bg-white"
+                    >
+                      {borderStyles.map(style => (
+                        <option key={style} value={style}>{style}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Cell Border Style</label>
+                    <select
+                      value={styles.cellBorderStyle}
+                      onChange={(e) => handleStyleChange('cellBorderStyle', e.target.value as BorderStyle)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm 
+                        focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                        transition-all duration-200 bg-white/50 hover:bg-white"
+                    >
+                      {borderStyles.map(style => (
+                        <option key={style} value={style}>{style}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </StyleSection>
 
-          {/* Modal Footer */}
-          <div className="sticky bottom-10 flex justify-end gap-3 border-t bg-white/80 p-4 backdrop-blur-sm">
-            <button
-              onClick={onClose}
-              className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleApply}
-              className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Apply Changes
-            </button>
-          </div>
-      {/* Add Item Dialog */}
-      {showAddItemAlert && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-2xl">
-            <div className="border-b p-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Add {newItemType === "section" ? "Section" : newItemType === "subsection" ? "Subsection" : "Merged Item"}
-              </h3>
+              <StyleSection icon={Layout} title="Section Row Styling">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Main Section Gradient Start</label>
+                    <input
+                      type="color"
+                      value={styles.mainSectionGradientStart}
+                      onChange={(e) => handleStyleChange('mainSectionGradientStart', e.target.value)}
+                      className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Main Section Gradient End</label>
+                    <input
+                      type="color"
+                      value={styles.mainSectionGradientEnd}
+                      onChange={(e) => handleStyleChange('mainSectionGradientEnd', e.target.value)}
+                      className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="alternateRows"
+                      checked={styles.alternateRowColors}
+                      onChange={(e) => handleStyleChange('alternateRowColors', e.target.checked)}
+                      className="w-4 h-4 rounded text-violet-500 focus:ring-violet-500"
+                    />
+                    <label htmlFor="alternateRows" className="text-sm text-gray-600">
+                      Alternate Main Section Row Colors
+                    </label>
+                  </div>
+                  
+                  {styles.alternateRowColors && (
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-2">Alternate Row Color</label>
+                      <input
+                        type="color"
+                        value={styles.alternateRowColor}
+                        onChange={(e) => handleStyleChange('alternateRowColor', e.target.value)}
+                        className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
+                      />
+                    </div>
+                  )}
+                </div>
+              </StyleSection>
             </div>
-            <div className="space-y-4 p-4">
-              <div>
-                <label htmlFor="itemName" className="block text-sm font-medium text-gray-700">
-                  Name
-                </label>
-                <input
-                  id="itemName"
-                  type="text"
-                  placeholder={`Enter ${newItemType} name`}
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                />
-                {!newItemName.trim() && (
-                  <Alert className="mt-2" variant="destructive">
-                    <AlertTitle>Required</AlertTitle>
-                    <AlertDescription>
-                      Please enter a name for the {newItemType === "section" ? "section" : newItemType === "subsection" ? "subsection" : "merged item"}.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowAddItemAlert(false)}
-                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddItem}
-                  disabled={!newItemName.trim()}
-                  className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      )}
-   </>
+      </div>
+
+      <div className="border-t bg-gradient-to-r from-gray-50 to-white p-4">
+        <div className="flex justify-end gap-2">
+          {activeTab === 'styles' && (
+            <button
+              onClick={handleReset}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white rounded-lg 
+                border border-gray-200 hover:bg-gray-50 hover:border-gray-300 
+                transition-all duration-200 flex items-center gap-1.5 button-pop"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Reset styles
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white rounded-lg 
+              border border-gray-200 hover:bg-gray-50 hover:border-gray-300 
+              transition-all duration-200 button-pop"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r 
+              from-blue-600 to-violet-600 rounded-lg hover:from-blue-700 
+              hover:to-violet-700 transition-all duration-200 shadow-sm 
+              hover:shadow-md button-pop"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

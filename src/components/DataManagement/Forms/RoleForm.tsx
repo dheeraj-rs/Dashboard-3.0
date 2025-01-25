@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { RoleFormProps, RoleManagementItem } from '../../../types/scheduler';
 import { Plus, X } from 'lucide-react';
+import { RoleManagementItem, RoleFormProps } from '../../../types/management';
 
 export const RoleForm: React.FC<RoleFormProps> = ({ initialData, onSubmit }) => {
   const [formData, setFormData] = useState<Partial<RoleManagementItem>>(

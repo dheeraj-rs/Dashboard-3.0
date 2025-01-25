@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { ModalProps } from '../../types/scheduler';
+import { ModalProps } from '../../types/common';
 
 export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
   if (!isOpen) return null;

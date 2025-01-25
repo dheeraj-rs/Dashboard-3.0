@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { TrackFormProps } from '../../types/scheduler';
 import { showToast } from '../Modal/CustomToast';
 import { validateTrackName, getDefaultDateTime, validateTrackDateTime } from '../../utils/validations';
+import { TrackFormProps } from '../../types/tracks';
 
 // Helper function to format date
 const formatDateTime = (date: Date) => {

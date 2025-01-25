@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import { Sprout, Trash2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Sprout, Trash2, CheckSquare } from 'lucide-react';
 import { seedData } from '../../utils/seedData';
-import { DataManagementItem, Track } from '../../types/scheduler';
+import { showToast } from '../../components/Modal/CustomToast';
+import { DataManagementItem } from '../../types/management';
+import { Track } from '../../types/tracks';
 
 interface DataSeedingPageProps {
   onAddItem: (type: string, item: Partial<DataManagementItem>) => void;
-  onAddTrack?: (track: Track) => void;
+  onAddTrack?: (track: Track, silent?: boolean) => void;
   onDeleteItem: (type: string, id: string) => void;
-  onDeleteTrack?: (id: string) => void;
+  onDeleteTrack?: (id: string, silent?: boolean) => void;
   data: {
     sectionstypes: DataManagementItem[];
     speakers: DataManagementItem[];
@@ -42,39 +44,99 @@ export default function DataSeedingPage({
     );
   };
 
+  const handleToggleAll = () => {
+    setSelectedTypes(prev => 
+      prev.length === dataTypes.length ? [] : dataTypes.map(type => type.id)
+    );
+  };
+
+  const checkForDuplicates = useCallback((type: string, item: any): boolean => {
+    const existingItems = data[type as keyof typeof data];
+    if (type === 'tracks') {
+      return existingItems.some(existing => existing.name === item.name);
+    }
+    return existingItems.some(existing => 
+      existing.name === item.name || 
+      ('email' in existing && 'email' in item && existing.email === item.email)
+    );
+  }, [data]);
+
   const handleSeedSelected = () => {
+    let seedCount = 0;
+    let duplicateCount = 0;
+
     selectedTypes.forEach(type => {
       if (type === 'tracks') {
         seedData.tracks.forEach(track => {
-          onAddTrack?.(track);
+          if (!data.tracks.some(existing => existing.name === track.name)) {
+            onAddTrack?.(track, true);
+            seedCount++;
+          } else {
+            duplicateCount++;
+          }
         });
       } else {
         seedData[type as keyof typeof seedData].forEach(item => {
-          onAddItem(type, item as Partial<DataManagementItem>);
+          if (!checkForDuplicates(type, item)) {
+            onAddItem(type, item as Partial<DataManagementItem>);
+            seedCount++;
+          } else {
+            duplicateCount++;
+          }
         });
       }
     });
+
+    if (seedCount > 0) {
+      showToast.success(`Successfully seeded ${seedCount} items`);
+    }
+    if (duplicateCount > 0) {
+      showToast.info(`Skipped ${duplicateCount} duplicate items`);
+    }
+    if (seedCount === 0 && duplicateCount > 0) {
+      showToast.info('All selected items already exist');
+    }
   };
 
   const handleClearSelected = () => {
+    let clearCount = 0;
+
     selectedTypes.forEach(type => {
       if (type === 'tracks') {
+        clearCount += data.tracks.length;
         data.tracks.forEach(track => {
-          onDeleteTrack?.(track.id);
+          onDeleteTrack?.(track.id, true);
         });
       } else {
+        clearCount += data[type as keyof typeof data].length;
         data[type as keyof typeof data].forEach(item => {
           onDeleteItem(type, item.id);
         });
       }
     });
+
+    if (clearCount > 0) {
+      showToast.success(`Successfully cleared ${clearCount} items`);
+    } else {
+      showToast.info('No items to clear');
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-slate-800">Data Seeding</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-semibold text-slate-800">Data Seeding</h1>
+            <button
+              onClick={handleToggleAll}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-violet-50 text-violet-600 
+                rounded-lg hover:bg-violet-100 transition-all duration-200"
+            >
+              <CheckSquare className="w-4 h-4" />
+              <span>{selectedTypes.length === dataTypes.length ? 'Deselect All' : 'Select All'}</span>
+            </button>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={handleSeedSelected}

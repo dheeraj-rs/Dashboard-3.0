@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { GuestManagementItem } from '../../../types/scheduler';
 import { Plus, X } from 'lucide-react';
+import { GuestManagementItem } from '../../../types/management';
 
 interface GuestFormProps {
   initialData?: GuestManagementItem;

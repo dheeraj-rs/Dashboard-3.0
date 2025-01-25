@@ -1,4 +1,4 @@
-import { AlertProps } from "../../types/scheduler";
+import { AlertProps } from "../../types/common";
 
 export function Alert({ children, className = '', variant = 'default' }: AlertProps) {
   return (

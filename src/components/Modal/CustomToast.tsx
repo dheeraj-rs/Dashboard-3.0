@@ -1,6 +1,6 @@
 import { toast } from 'react-hot-toast';
 import { CheckCircle2, XCircle, AlertCircle, X } from 'lucide-react';
-import { ToastProps } from '../../types/scheduler';
+import { ToastProps } from '../../types/common';
 
 export const CustomToast = ({ t, message, type = 'info' }: ToastProps) => {
   const icons = {

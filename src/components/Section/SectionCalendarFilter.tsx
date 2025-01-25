@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Calendar, Clock, X } from 'lucide-react';
-import { SectionCalendarFilterProps } from '../../types/scheduler';
 import { createPortal } from 'react-dom';
+import { SectionCalendarFilterProps } from '../../types/sections';
 
 export default function SectionCalendarFilter({ 
   sections, 

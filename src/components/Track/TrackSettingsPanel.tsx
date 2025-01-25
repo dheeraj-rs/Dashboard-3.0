@@ -1,8 +1,9 @@
-import { TrackSettingsPanelProps } from '../../types/scheduler';
 import { Pencil, Trash2, Calendar, Clock, Layers, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import TrackForm from './TrackForm';
 import DeleteConfirmationModal from '../Modal/DeleteConfirmationModal';
+import { TrackSettingsPanelProps } from '../../types/tracks';
+import { Track } from '../../types/tracks';
 
 export default function TrackSettingsPanel({ 
   track, 
@@ -47,7 +48,7 @@ export default function TrackSettingsPanel({
         <TrackForm
           initialData={track}
           tracks={tracks}
-          onSubmit={(trackData) => {
+          onSubmit={(trackData: Partial<Track>) => {
             handleUpdateTrack(trackData);
             setIsEditing(false);
             return true;

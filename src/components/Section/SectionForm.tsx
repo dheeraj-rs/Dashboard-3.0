@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Section, ExtendedSectionFormProps } from '../../types/scheduler';
 import { validateTimeSlot } from '../../utils/validations';
 import { showToast } from '../Modal/CustomToast';
+import { Section, ExtendedSectionFormProps } from '../../types/sections';
 type SectionField = keyof Omit<Section, 'id' | 'subsections' | 'deleted'>;
 
 export default function SectionForm({ 
@@ -22,6 +22,7 @@ export default function SectionForm({
       start: '09:00',
       end: '10:00'
     },
+    specialType: initialData?.specialType || null,
     mergedFields: initialData?.mergedFields || {
       speaker: {
         isMerged: false,
@@ -88,6 +89,12 @@ export default function SectionForm({
     setFlyoverState({ isOpen: false, type: null, data: null });
   };
 
+  // Add new function to check if it's a special section type
+  const isSpecialSection = (typeId: string) => {
+    const sectionType = sectionTypes.find(type => type.id === typeId);
+    return sectionType?.sectionType === 'lunch' || sectionType?.sectionType === 'break';
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-6">
       <div className="text-xl font-semibold text-gray-900 mb-6">
@@ -97,80 +104,81 @@ export default function SectionForm({
         }
       </div>
 
-      {!isSubsection && (
-        <div>
-          <label htmlFor="sectionType" className="block text-sm font-medium text-gray-700">
-            Section Type
-          </label>
-          <select
-            id="sectionType"
-            value={formData.sectionTypeId}
-            onChange={(e) => handleChange('sectionTypeId', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            required
-          >
-            <option value="">Select a type</option>
-            {sectionTypes.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          {isSubsection ? 'Subsection Name' : 'Section Name'}
+      {!isSubsection &&   <div>
+        <label htmlFor="sectionType" className="block text-sm font-medium text-gray-700">
+          Section Type
         </label>
-        <input
-          type="text"
-          id="name"
-          value={formData.name}
-          onChange={(e) => handleChange('name', e.target.value)}
+        <select
+          id="sectionType"
+          value={formData.sectionTypeId}
+          onChange={(e) => {
+            const newTypeId = e.target.value;
+            handleChange('sectionTypeId', newTypeId);
+            
+            // Clear speaker and role if special section
+            if (isSpecialSection(newTypeId)) {
+              setFormData(prev => ({
+                ...prev,
+                speaker: '',
+                role: '',
+                sectionTypeId: newTypeId
+              }));
+            }
+          }}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           required
-        />
+        >
+          <option value="">Select a type</option>
+          {sectionTypes.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.name}
+            </option>
+          ))}
+        </select>
       </div>
+}
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="speaker" className="block text-sm font-medium text-gray-700">
-            Speaker
-          </label>
-          <select
-            id="speaker"
-            value={formData.speaker}
-            onChange={(e) => handleChange('speaker', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          >
-            <option value="">Select a speaker</option>
-            {speakers.map((speaker) => (
-              <option key={speaker.id} value={speaker.name}>
-                {speaker.name}
-              </option>
-            ))}
-          </select>
+    
+      {!isSpecialSection(formData.sectionTypeId!) && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="speaker" className="block text-sm font-medium text-gray-700">
+              Speaker
+            </label>
+            <select
+              id="speaker"
+              value={formData.speaker}
+              onChange={(e) => handleChange('speaker', e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            >
+              <option value="">Select a speaker</option>
+              {speakers.map((speaker) => (
+                <option key={speaker.id} value={speaker.name}>
+                  {speaker.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+              Role
+            </label>
+            <select
+              id="role"
+              value={formData.role}
+              onChange={(e) => handleChange('role', e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            >
+              <option value="">Select a role</option>
+              {roles.map((role) => (
+                <option key={role.id} value={role.name}>
+                  {role.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div>
-          <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-            Role
-          </label>
-          <select
-            id="role"
-            value={formData.role}
-            onChange={(e) => handleChange('role', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          >
-            <option value="">Select a role</option>
-            {roles.map((role) => (
-              <option key={role.id} value={role.name}>
-                {role.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>

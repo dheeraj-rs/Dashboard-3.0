@@ -7,9 +7,10 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { Section, Track, TrackListProps } from "../../types/scheduler";
 import { Draggable } from "react-beautiful-dnd";
 import CalendarFilter from "./CalendarFilter";
+import { Track, TrackListProps } from "../../types/tracks";
+import { Section } from "../../types/sections";
 
 export default function TrackList({
   tracks,
@@ -148,7 +149,7 @@ export default function TrackList({
               <div className="w-full sm:w-auto">
                 <CalendarFilter
                   tracks={tracks}
-                  onFilterChange={(filter) => setDateFilter(filter)}
+                  onFilterChange={(filter: { type: 'day' | 'month' | 'year', value: string } | null) => setDateFilter(filter)}
                   activeFilter={dateFilter}
                 />
               </div>

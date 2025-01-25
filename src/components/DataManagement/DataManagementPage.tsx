@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
-import { DataManagementItem, DataManagementPageProps } from '../../types/scheduler';
+import { DataManagementItem, DataManagementPageProps } from '../../types/management';
 
 export default function DataManagementPage({
   setFlyoverState,

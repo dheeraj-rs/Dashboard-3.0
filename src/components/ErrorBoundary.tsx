@@ -1,5 +1,5 @@
 import { Component, ErrorInfo } from 'react';
-import { Props, State } from '../types/scheduler';
+import { Props, State } from '../types/common';
 
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
