@@ -4,7 +4,9 @@ import { LucideIcon } from 'lucide-react';
 import { BorderStyle, TableHeader } from './ui';
 import { Track } from './tracks';
 import { FlyoverState } from './ui';
-import { DataManagementState } from './management';
+import { DataManagementItem, DataManagementState } from './management';
+import { Dispatch, SetStateAction } from 'react';
+import { Section } from './sections';
 
 export interface TimeSlot {
   readonly start: string;
@@ -83,12 +85,13 @@ export interface HeaderSettingsModalProps {
 export interface FlyoverPanelProps {
   flyoverState: FlyoverState;
   getFlyoverTitle: (type: string | null) => string;
-  setFlyoverState: (state: FlyoverState) => void;
+  setFlyoverState: Dispatch<SetStateAction<FlyoverState>>;
   handleUpdateTrack: (trackData: Partial<Track>) => boolean;
   handleAddTrack: (trackData: Partial<Track>) => boolean;
-  handleSubmitSection: (formData: any) => void;
-  handleAddManagementItem: (type: string, item: any) => void;
-  handleUpdateManagementItem: (type: string, id: string, updates: any) => void;
+  handleUpdateSection: (sectionId: string, updates: Partial<Section>) => void;
+  handleSubmitSection: (sectionData: Partial<Section>) => void;
+  handleAddManagementItem: (type: string, item: Partial<DataManagementItem>) => void;
+  handleUpdateManagementItem: (type: string, id: string, updates: Partial<DataManagementItem>) => void;
   tracks: Track[];
   managementData: DataManagementState;
   showToast?: { success: (msg: string) => void; error: (msg: string) => void };
@@ -97,5 +100,9 @@ export interface FlyoverPanelProps {
 export interface ColorSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApply: (color: string, mergeName: string) => void;
+  onApply: (color: string, mergeName: string, mergeNameBehavior: 'replace' | 'append') => void;
+}
+
+export interface DeleteModalProps extends Omit<ModalProps, 'children'> {
+  onConfirm: () => void;
 }

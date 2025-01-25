@@ -1,7 +1,6 @@
 import  { useState } from 'react';
 import Modal from './Modal';
 import { Check } from 'lucide-react';
-import { ColorSelectionModalProps } from '../../types/common';
 
 const colorOptions = [
   { name: 'Blue', class: 'bg-blue-100', hover: 'hover:bg-blue-200' },
@@ -15,14 +14,23 @@ const colorOptions = [
   { name: 'Red', class: 'bg-red-100', hover: 'hover:bg-red-200' },
 ] as const;
 
-type ColorClass = typeof colorOptions[number]['class'];
+export interface ColorSelectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onApply: (
+    color: string, 
+    mergeName: string, 
+    mergeNameBehavior: 'replace' | 'append' | 'replace_current'
+  ) => void;
+}
 
 export default function ColorSelectionModal({ isOpen, onClose, onApply }: ColorSelectionModalProps) {
-  const [selectedColor, setSelectedColor] = useState<ColorClass>(colorOptions[0].class);
+  const [selectedColor, setSelectedColor] = useState<string>(colorOptions[0].class);
   const [mergeName, setMergeName] = useState('');
+  const [mergeNameBehavior, setMergeNameBehavior] = useState<'replace' | 'append' | 'replace_current'>('replace');
 
   const handleApply = () => {
-    onApply(selectedColor, mergeName);
+    onApply(selectedColor, mergeName, mergeNameBehavior);
     onClose();
   };
 
@@ -40,6 +48,41 @@ export default function ColorSelectionModal({ isOpen, onClose, onApply }: ColorS
             className="w-full px-3 py-2 border rounded-md"
             placeholder="Enter merge name"
           />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Merge Name Behavior
+          </label>
+          <div className="space-y-2">
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                checked={mergeNameBehavior === 'replace_current'}
+                onChange={() => setMergeNameBehavior('replace_current')}
+                className="text-indigo-600"
+              />
+              <span className="text-sm text-gray-700">Replace with current cell name</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                checked={mergeNameBehavior === 'replace'}
+                onChange={() => setMergeNameBehavior('replace')}
+                className="text-indigo-600"
+              />
+              <span className="text-sm text-gray-700">Replace with new name</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                checked={mergeNameBehavior === 'append'}
+                onChange={() => setMergeNameBehavior('append')}
+                className="text-indigo-600"
+              />
+              <span className="text-sm text-gray-700">Append to existing names</span>
+            </label>
+          </div>
         </div>
 
         <div>
@@ -71,13 +114,13 @@ export default function ColorSelectionModal({ isOpen, onClose, onApply }: ColorS
         <div className="flex justify-end gap-2 mt-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+            className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
           >
             Cancel
           </button>
           <button
             onClick={handleApply}
-            className="px-4 py-2 bg-blue-600 text-slate-50 rounded-md hover:bg-blue-700"
+            className="px-3 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
           >
             Apply
           </button>

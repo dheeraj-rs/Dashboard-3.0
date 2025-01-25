@@ -3,8 +3,6 @@ import { RefreshCw, Layout, Type, Grid, Palette, Eye, EyeOff } from 'lucide-reac
 import { HeaderSettingsState, HeaderSettingsModalProps } from "../../types/common";
 import { BorderStyle, TableHeader } from "../../types/ui";
 
-
-
 const calculateTextColor = (backgroundColor: string): string => {
   const hex = backgroundColor.replace('#', '');
   const r = parseInt(hex.substr(0, 2), 16);

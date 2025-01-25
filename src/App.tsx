@@ -2,7 +2,6 @@ import { useState, lazy, Suspense, useEffect } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { Calendar, Settings, Layout, Database, Sprout } from "lucide-react";
 import { Toaster } from "react-hot-toast";
-
 import { showToast } from "./components/Modal/CustomToast";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -34,7 +33,6 @@ function App() {
     sectionstypes: [],
     guests: []
   });
-
 
   const sectionTypes: SectionManagementItem[] = [
     { id: '1', name: 'Regular Section', sectionType: 'regular', type: 'sectionstypes' },
@@ -190,37 +188,61 @@ function App() {
     parentSection: Section,
     sectionData: Partial<Section>
   ): Section => {
+    // Calculate default time slot based on parent's time slot
+    const defaultTimeSlot = (() => {
+      const parentStart = parentSection.timeSlot.start;
+      const parentEnd = parentSection.timeSlot.end;
+      
+      // If parent has no subsections, split parent's time in half
+      if (!parentSection.subsections.length) {
+        const [startHours, startMinutes] = parentStart.split(':').map(Number);
+        const [endHours, endMinutes] = parentEnd.split(':').map(Number);
+        
+        const totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+        const halfPoint = startHours * 60 + startMinutes + Math.floor(totalMinutes / 2);
+        
+        const midHours = Math.floor(halfPoint / 60);
+        const midMinutes = halfPoint % 60;
+        
+        const midTime = `${midHours.toString().padStart(2, '0')}:${midMinutes.toString().padStart(2, '0')}`;
+        
+        return { start: parentStart, end: midTime };
+      }
+      
+      // If parent has subsections, place new subsection after the last one
+      const lastSubsection = parentSection.subsections[parentSection.subsections.length - 1];
+      return { start: lastSubsection.timeSlot.end, end: parentEnd };
+    })();
+
     return {
       id: crypto.randomUUID(),
-      name:
-        sectionData.name ||
-        `Subsection ${parentSection.subsections.length + 1}`,
-      timeSlot: sectionData.timeSlot || parentSection.timeSlot,
+      name: sectionData.name || `Subsection ${parentSection.subsections.length + 1}`,
+      timeSlot: sectionData.timeSlot || defaultTimeSlot,
       speaker: sectionData.speaker || parentSection.speaker,
       role: sectionData.role || parentSection.role,
       sectionTypeId: sectionData.sectionTypeId || parentSection.sectionTypeId,
       subsections: [],
       mergedFields: {
         speaker: {
-          isMerged: sectionData.mergedFields?.speaker?.isMerged || false,
-          color: sectionData.mergedFields?.speaker?.color || "",
-          mergeId: sectionData.mergedFields?.speaker?.mergeId || "",
-          mergeName: sectionData.mergedFields?.speaker?.mergeName || "",
-          value: sectionData.mergedFields?.speaker?.value || null,
+          isMerged: false,
+          color: "",
+          mergeId: "",
+          mergeName: "",
+          value: null,
         },
         role: {
-          isMerged: sectionData.mergedFields?.role?.isMerged || false,
-          color: sectionData.mergedFields?.role?.color || "",
-          mergeId: sectionData.mergedFields?.role?.mergeId || "",
-          mergeName: sectionData.mergedFields?.role?.mergeName || "",
-          value: sectionData.mergedFields?.role?.value || null,
+          isMerged: false,
+          color: "",
+          mergeId: "",
+          mergeName: "",
+          value: null,
         },
         timeSlot: {
-          isMerged: sectionData.mergedFields?.timeSlot?.isMerged || false,
-          color: sectionData.mergedFields?.timeSlot?.color || "",
-          mergeId: sectionData.mergedFields?.timeSlot?.mergeId || "",
-          mergeName: sectionData.mergedFields?.timeSlot?.mergeName || "",
-          value: sectionData.mergedFields?.timeSlot?.value || null,
+          isMerged: false,
+          color: "",
+          mergeId: "",
+          mergeName: "",
+          value: null,
         },
       },
     };
@@ -238,27 +260,23 @@ function App() {
       }
 
       // Handle new subsection
-      if (
-        flyoverState.type === "add-subsection" &&
-        flyoverState.data?.parentId
-      ) {
+      if (flyoverState.type === "add-subsection" && flyoverState.data?.parentId) {
         setTracks((prev) =>
           prev.map((track) => {
             if (track.id !== selectedTrackId) return track;
 
             const addSubsectionToSection = (sections: Section[]): Section[] => {
               return sections.map((section) => {
+                // Only add subsection to the target parent
                 if (section.id === flyoverState.data.parentId) {
-                  const newSubsection = createNewSubsection(
-                    section,
-                    sectionData
-                  );
+                  const newSubsection = createNewSubsection(section, sectionData);
                   return {
                     ...section,
                     subsections: [...section.subsections, newSubsection],
                   };
                 }
 
+                // If this section has subsections, recursively check them
                 if (section.subsections?.length > 0) {
                   return {
                     ...section,
@@ -266,6 +284,7 @@ function App() {
                   };
                 }
 
+                // Return unmodified section if no match
                 return section;
               });
             };
@@ -278,6 +297,7 @@ function App() {
         );
         showToast.success("Subsection added successfully");
       } else {
+        // Handle new top-level section
         handleAddSection(selectedTrackId, sectionData);
       }
     } catch (error) {
@@ -304,9 +324,28 @@ function App() {
             targetId: string,
             updates: Partial<Section>
           ): Section[] => {
+            // If we're deleting, filter out the target section
+            if (updates.deleted) {
+              return sections.filter(section => {
+                // If this is the section to delete, return false to remove it
+                if (section.id === targetId) {
+                  return false;
+                }
+                // If this section has subsections, recursively filter them
+                if (section.subsections?.length) {
+                  section.subsections = updateSectionRecursively(
+                    section.subsections,
+                    targetId,
+                    updates
+                  );
+                }
+                return true;
+              });
+            }
+
+            // If not deleting, proceed with normal updates
             return sections.map((section) => {
               if (section.id === targetId) {
-                // Create new timeSlot object if it's being updated
                 const updatedTimeSlot = updates.timeSlot
                   ? { ...section.timeSlot, ...updates.timeSlot }
                   : section.timeSlot;
@@ -331,7 +370,6 @@ function App() {
                   updates
                 );
 
-                // Always create new section object when dealing with time updates
                 if (
                   updates.timeSlot ||
                   updatedSubsections !== section.subsections
@@ -353,22 +391,18 @@ function App() {
             updates
           );
 
-          // Force update for time changes
-          if (updates.timeSlot || updatedSections !== track.sections) {
-            return {
-              ...track,
-              sections: updatedSections,
-            };
-          }
-          return track;
+          return {
+            ...track,
+            sections: updatedSections,
+          };
         });
 
-        // Force new array reference for time updates
-        return updates.timeSlot ||
-          newTracks.some((track, i) => track !== prev[i])
-          ? [...newTracks]
-          : prev;
+        return newTracks;
       });
+
+      if (updates.deleted) {
+        showToast.success("Section deleted successfully");
+      }
     } catch (error) {
       showToast.error("Failed to update section");
       console.error("Error updating section:", error);

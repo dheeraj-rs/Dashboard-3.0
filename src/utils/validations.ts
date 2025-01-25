@@ -1,4 +1,4 @@
-import { Track } from '../types/scheduler';
+import { Track } from "../types/tracks";
 
 export const validateTrackDates = (startDate: string, endDate: string, isEdit: boolean = false): string | null => {
   const start = new Date(startDate);

@@ -86,7 +86,7 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/60 transform transition-all duration-300 ease-in-out 
+        className={`fixed inset-y-0 left-0 z-40 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/60 transform transition-all duration-300 ease-in-out 
           ${!isSidebarOpen ? "-translate-x-full" : "translate-x-0"}
           ${isMiniSidebar ? "w-20" : "w-72"}
           border-r border-slate-200/70 md:translate-x-0`}

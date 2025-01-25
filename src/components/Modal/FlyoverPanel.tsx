@@ -24,11 +24,12 @@ function FlyoverPanel({
   return (
     <>
       {/* Exploding Glass Effect Backdrop */}
+      
       <div 
         className={`fixed inset-0 transition-all duration-500 z-[89]
           perspective-[2000px] overflow-hidden
           ${flyoverState.isOpen 
-            ? 'opacity-90 backdrop-blur-[2px] backdrop-filter backdrop-saturate-150'
+            ? 'opacity-90 backdrop-blur-[2px] backdrop-filter backdrop-saturate-150 '
             : 'opacity-0 pointer-events-none'
           }
         `}

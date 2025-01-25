@@ -1,4 +1,4 @@
-import { Section, SectionGroup } from '../types/scheduler';
+import { Section, SectionGroup } from "../types/sections";
 
 export function groupSectionsByRole(sections: Section[]): SectionGroup[] {
   const groups: SectionGroup[] = [];
