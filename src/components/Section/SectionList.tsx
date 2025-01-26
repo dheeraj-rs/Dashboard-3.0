@@ -16,6 +16,8 @@ import {
   Clock,
   Layers,
   AlertCircle,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import { groupSectionsByRole } from "../../utils";
 import ColorSelectionModal from "../Modal/ColorSelectionModal";
@@ -614,7 +616,7 @@ const SectionRow = React.memo(
           <>
             {/* Backdrop */}
             <div 
-              className="fixed inset-0 bg-black/10 z-40 
+              className="fixed inset-0 bg-black/10 z-50 
                 animate-[fade-in_200ms_ease-out]"
               onClick={handleCancelDelete}
             />
@@ -667,6 +669,8 @@ function SectionList({
   activeTrack,
   setFlyoverState,
   currentStyles,
+  tracks,
+  onSelectTrack,
 }: SectionListProps) {
   const [headers, setHeaders] = useState<TableHeader[]>([
     { id: "0", label: "Level", type: "indicator", isVisible: true },
@@ -716,6 +720,7 @@ function SectionList({
   const [filteredSections, setFilteredSections] = useState(
     groupSectionsByRole(sections)
   );
+  const [showTrackDropdown, setShowTrackDropdown] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -756,6 +761,17 @@ function SectionList({
       return newGroupedSections;
     });
   }, [sections]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showTrackDropdown && !(event.target as HTMLElement).closest('.track-dropdown-container')) {
+        setShowTrackDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showTrackDropdown]);
 
   const handleSelect = useCallback(
     (
@@ -1113,9 +1129,8 @@ function SectionList({
     };
 
     return (
-      <div className="flex-shrink-0">
-        <div className="flex items-center gap-2 h-9">
-          <span className="text-sm font-medium bg-gray-50/80 px-3 py-1.5 rounded-md whitespace-nowrap">
+      <div className="w-full sm:w-auto flex-shrink-0 flex flex-col sm:flex-row items-center gap-2">
+        <span className="text-sm font-medium bg-gray-50/80 px-3 py-1.5 rounded-md whitespace-nowrap">
             {selection.selectedCells.length} cells selected (
             {Array.from(uniqueColumnTypes).join(", ")})
           </span>
@@ -1135,8 +1150,8 @@ function SectionList({
                 }}
                 className="inline-flex items-center px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-md transition-colors duration-200"
               >
-                <Unlink className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">Unmerge</span>
+                <Unlink className="w-4 h-4 mr-2" />
+                <span className="inline">Unmerge</span>
               </button>
             )}
             <div className="flex items-center">
@@ -1149,14 +1164,14 @@ function SectionList({
                     : "bg-indigo-600 text-white hover:bg-indigo-700"
                 }`}
               >
-                <Link className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">
+                <Link className="w-4 h-4 mr-2" />
+                <span className="inline">
                   {hasMergedCells ? "New Merge" : "Merge"}
                 </span>
               </button>
               <button
                 onClick={handleCancelSelection}
-                className={`inline-flex items-center px-2 py-1.5 text-sm rounded-r-md border-l border-indigo-500 transition-colors duration-200 ${
+                className={`inline-flex items-center px-3 py-1.5 text-sm rounded-r-md border-l border-indigo-500 transition-colors duration-200 ${
                   selection.selectedCells.length < 1
                     ? "bg-gray-300 text-gray-600 border-gray-600"
                     : "bg-indigo-600 text-white hover:bg-indigo-700 border-indigo-100"
@@ -1167,7 +1182,6 @@ function SectionList({
               </button>
             </div>
           </div>
-        </div>
       </div>
     );
   }, [handleUnmergeSelection, selection.selectedCells]);
@@ -1188,8 +1202,8 @@ function SectionList({
     };
 
     return (
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1 bg-white/70 backdrop-blur-sm border border-gray-100 rounded-xl p-1 shadow-sm transition-all duration-300 hover:shadow-md">
+      <div className="w-full sm:w-auto flex flex-wrap items-center gap-3">
+        <div className="flex w-full sm:w-auto  justify-evenly sm:justify-center sm:items-center gap-1 bg-white/70 backdrop-blur-sm border border-gray-100 rounded-xl p-1 shadow-sm transition-all duration-300 hover:shadow-md">
           <button
             onClick={() => setIsFullScreen((prev) => !prev)}
             className="p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50/80 transition-all duration-200 group relative"
@@ -1254,12 +1268,12 @@ function SectionList({
         ) : (
           <button
             onClick={handleAddSection}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-violet-600 text-white text-sm font-medium rounded-xl relative group overflow-hidden hover:shadow-lg transform transition-all duration-300 hover:scale-[1.02] hover:translate-y-[-1px] active:scale-[0.98] active:translate-y-[1px]"
+            className="flex w-full sm:w-auto items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-violet-600 text-white text-sm font-medium rounded-xl relative group overflow-hidden hover:shadow-lg transform transition-all duration-300 hover:scale-[1.02] hover:translate-y-[-1px] active:scale-[0.98] active:translate-y-[1px]"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-center gap-2">
+            <div className="relative w-full flex items-center justify-center gap-2">
               <PlusCircle className="w-4 h-4 transform group-hover:rotate-180 transition-transform duration-500" />
-              <span className="relative">Add Section</span>
+              <span className="relative whitespace-nowrap">Add Section</span>
             </div>
             <div className="absolute inset-0 transform translate-x-[-100%] group-hover:translate-x-[100%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 ease-out" />
           </button>
@@ -1275,6 +1289,89 @@ function SectionList({
     tableStyles,
     selection.selectedCells,
   ]);
+
+  const TrackDropdown = () => {
+    const [showTrackDropdown, setShowTrackDropdown] = useState(false);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (showTrackDropdown && !(event.target as HTMLElement).closest('.track-dropdown-container')) {
+          setShowTrackDropdown(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showTrackDropdown]);
+
+    if (!tracks?.length) {
+      return (
+        <div className="w-full px-3 py-2.5 text-sm text-gray-500 bg-gray-50 rounded-xl border border-gray-200">
+          No tracks available
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative track-dropdown-container transform transition-all duration-200 hover:scale-[1.02]">
+        <button 
+          onClick={() => setShowTrackDropdown(prev => !prev)}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-sm 
+            bg-white rounded-xl border border-gray-200 
+            focus:outline-none focus:ring-2 focus:ring-blue-500/30 
+            hover:border-blue-400 active:border-blue-500
+            transition-all duration-200 group-hover:shadow-md"
+        >
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-gray-400" />
+            <span className="truncate">{activeTrack?.name || 'Select Track'}</span>
+          </div>
+          <ChevronDown 
+            className={`w-4 h-4 transform transition-transform duration-200 
+            ${showTrackDropdown ? 'rotate-180' : ''}`} 
+          />
+        </button>
+
+        {showTrackDropdown && (
+          <>
+            <div 
+              className="fixed inset-0  z-[998]"
+              onClick={() => setShowTrackDropdown(false)}
+            />
+            <div className="absolute left-0 mt-2 w-full bg-white rounded-xl shadow-xl 
+              border border-gray-200 py-1 z-[999]">
+              <div className="max-h-[300px] overflow-y-auto">
+                {tracks.map((track) => (
+                  <button
+                    key={track.id}
+                    onClick={() => {
+                      try {
+                        onSelectTrack(track.id);
+                        setShowTrackDropdown(false);
+                      } catch (error) {
+                        showToast.error("Failed to select track");
+                      }
+                    }}
+                    className={`w-full px-4 py-2.5 text-left text-sm transition-colors duration-200 
+                      flex items-center gap-2 hover:bg-gray-50
+                      ${track.id === activeTrack?.id ? 'bg-blue-50/80 text-blue-600 font-medium' : 'text-gray-700'}`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0
+                      ${track.id === activeTrack?.id ? 'bg-blue-500' : 'bg-gray-300'}`} 
+                    />
+                    <span className="truncate">{track.name}</span>
+                    {track.id === activeTrack?.id && (
+                      <Check className="w-4 h-4 ml-auto text-blue-500" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
 
   const MergeWarningModal = useCallback(
     () => (
@@ -1350,18 +1447,18 @@ function SectionList({
     <div
       className={`${
         isFullScreen
-          ? "fixed inset-0 z-50 bg-white overflow-auto"
+          ? "fixed inset-0 z-40 bg-white overflow-auto"
           : "relative flex flex-col h-full"
       }`}
     >
       <div
         className={`${isFullScreen ? "min-h-screen" : "h-full"} flex flex-col`}
       >
-        <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50">
-          <div className="p-4">
+        <div className="w-full sm:w-auto flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50">
+          <div className="p-3">
             {activeTrack && (
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                   <div className="flex items-center gap-3">
                     <h2 className="relative group">
                       <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-violet-500 to-purple-600 bg-clip-text text-transparent inline-flex items-center gap-2">
@@ -1374,23 +1471,23 @@ function SectionList({
                     </h2>
                     <div className="hidden sm:block w-2 h-2 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 animate-pulse" />
                   </div>
-                  <div className="flex w-full flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
-                    <div className="flex min-w-40 md:w-auto items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
+                  <div className="flex w-full sm:w-auto sm:min-w-40 items-center justify-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
                       <Clock className="w-4 h-4 text-blue-500" />
                       <span className="text-sm text-gray-600">
                         {new Date(activeTrack.startDate).toLocaleDateString()} -{" "}
                         {new Date(activeTrack.endDate).toLocaleDateString()}
                       </span>
                     </div>
-                    <div className="flex md:flex-row md:w-auto items-center gap-2 bg-violet-50 px-3 py-1.5 rounded-lg">
+                  <div className="flex w-full sm:w-auto flex-col sm:flex-row items-start md:items-center gap-3 md:gap-6">
+                    <div className="flex w-full sm:max-w-40 sm:flex-row items-center justify-center gap-2 bg-violet-50 px-3 py-1.5 rounded-lg">
                       <Layers className="w-4 h-4 text-violet-500" />
-                      <span className="text-sm text-gray-600 flex-nowrap min-w-20">
+                      <span className="text-sm text-gray-600 whitespace-nowrap">
                         {activeTrack.sections.length} sections
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="w-full sm:w-auto flex items-center gap-3">
                   <ControlButtons />
                 </div>
               </div>
@@ -1399,20 +1496,16 @@ function SectionList({
         </div>
         <div className={`flex-1 py-4 sticky top-0 ${isFullScreen && "p-4"}`}>
           <div className="rounded-xl border border-gray-200 bg-white h-full overflow-hidden shadow-sm">
-            <div className="border-b border-gray-100 bg-white/95 sticky top-0 z-20 backdrop-blur-md">
+            <div className="border-b border-gray-100 bg-white/95 sticky top-0 z-50 backdrop-blur-md">
               <div className="p-3 bg-gradient-to-r from-slate-50/90 to-white/80">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                  <div className="flex items-center gap-3">
-                    <button className="p-2 rounded-lg hover:bg-gray-50 text-gray-600 border border-gray-100">
-                      <Clock className="w-4 h-4" />
-                    </button>
-                    <select className="px-3 py-2 min-w-36 rounded-lg border border-gray-200 text-sm bg-white hover:bg-gray-50 cursor-pointer">
-                      <option>Timeline View</option>
-                      <option>Table View</option>
-                      <option>Gantt View</option>
-                    </select>
+
+                  {/* Track Dropdown */}
+                  <div className="flex-1 w-full sm:max-w-[200px] order-2 sm:order-1">
+                    <TrackDropdown />
                   </div>
-                  <div className="flex-1 max-w-md">
+                  
+                  <div className=" w-full sm:w-auto order-3 sm:order-2">
                     <div className="relative transform transition-all duration-200 hover:scale-[1.02]">
                       <SectionCalendarFilter
                         sections={sections}
@@ -1421,14 +1514,14 @@ function SectionList({
                       />
                     </div>
                   </div>
-                  <div className="relative flex-1 max-w-sm">
+                  <div className="relative flex-1 w-full sm:w-auto order-1 sm:order-3">
                     <div className="relative group">
                       <input
                         type="text"
                         placeholder="Search sections..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 text-sm bg-white/50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 placeholder-gray-400 transition-all duration-200 group-hover:shadow-md backdrop-blur-sm"
+                        className="w-full pl-10 pr-10 py-2.5 text-sm bg-white/50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 placeholder-gray-400 transition-all duration-200 group-hover:shadow-md backdrop-blur-sm z"
                       />
                       <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-200 group-hover:text-blue-500" />
                       {searchQuery && (

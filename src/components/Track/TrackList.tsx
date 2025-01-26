@@ -87,24 +87,31 @@ export default function TrackList({
             {/* Top Row - Title and Stats */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               {/* Left Side - Title and Stats */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-                <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-                  Tracks 
-                </h2>
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                
+                <div className="flex items-center gap-3">
+                    <h2 className="relative group">
+                      <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-violet-500 to-purple-600 bg-clip-text text-transparent inline-flex items-center gap-2">
+                      Tracks 
+                      </span>
+                      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 via-violet-500 to-purple-600 group-hover:w-full transition-all duration-300" />
+                    </h2>
+                  </div>
+                
                 
                 {/* Stats - Scrollable on mobile */}
-                <div className="flex items-center gap-3 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
+                <div className="flex items-center justify-center gap-3 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
                   <div className="flex items-center gap-2 text-blue-600 whitespace-nowrap min-w-max px-2">
                     <Users className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm font-medium flex flex-col md:flex-row">{tracks.length} <span className="md:block hidden">Tracks</span></span>
+                    <span className="text-sm font-medium flex flex-row">{tracks.length} <span className="sm:block hidden"> Tracks</span></span>
                   </div>
                   <div className="flex items-center gap-2 text-violet-600 whitespace-nowrap min-w-max px-2">
                     <Clock className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm font-medium flex flex-col md:flex-row">{totalSections} <span className="md:block hidden">Sections</span></span>
+                    <span className="text-sm font-medium flex flex-row">{totalSections} <span className="sm:block hidden"> Sections</span></span>
                   </div>
                   <div className="flex items-center gap-2 text-green-600 whitespace-nowrap min-w-max px-2">
                     <Users className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm font-medium flex flex-col md:flex-row">{totalParticipants} <span className="md:block hidden">Participants</span></span>
+                    <span className="text-sm font-medium flex flex-row">{totalParticipants} <span className="sm:block hidden"> Participants</span></span>
                   </div>
                 </div>
               </div>              
@@ -132,7 +139,7 @@ export default function TrackList({
             {/* Content */}
             <div className="relative flex items-center gap-2">
               <PlusCircle className="w-4 h-4 transform group-hover:rotate-180 transition-transform duration-500" />
-              <span className="relative">New Track</span>
+              <span className="relative whitespace-nowrap">New Track</span>
             </div>
 
             {/* Shine Effect */}

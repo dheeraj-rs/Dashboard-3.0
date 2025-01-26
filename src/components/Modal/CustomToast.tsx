@@ -82,16 +82,16 @@ export const showToast = {
   success: (message: string) => 
     toast.custom((t) => <CustomToast t={t} message={message} type="success" />, {
       duration: 4000,
-      position: 'bottom-left',
+      position: 'top-right',
     }),
   error: (message: string) => 
     toast.custom((t) => <CustomToast t={t} message={message} type="error" />, {
       duration: 4000,
-      position: 'bottom-left',
+        position: 'top-right',
     }),
   info: (message: string) => 
     toast.custom((t) => <CustomToast t={t} message={message} type="info" />, {
       duration: 4000,
-      position: 'bottom-left',
+      position: 'top-right',
     })
 }; 

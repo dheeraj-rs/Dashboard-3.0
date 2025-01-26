@@ -179,7 +179,7 @@ export default function SectionForm({
       )}
 
       {!isSpecialSection(formData.sectionTypeId!) && (
-        <div className="grid grid-cols-2 gap-4">
+          <>
           <div>
             <label
               htmlFor="speaker"
@@ -222,7 +222,8 @@ export default function SectionForm({
               ))}
             </select>
           </div>
-        </div>
+          </>
+     
       )}
 
       <div className="grid grid-cols-2 gap-4">

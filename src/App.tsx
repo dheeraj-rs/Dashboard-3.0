@@ -7,9 +7,12 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import DataSeedingPage from "./components/DataSeeding/DataSeedingPage";
 import { Track } from "./types/tracks";
-import { FlyoverState, TableHeader } from "./types/ui";
+import { FlyoverState, TableHeader, TableStyles } from "./types/ui";
 import { Section, SectionManagementItem } from "./types/sections";
 import { DataManagementItem, DataManagementState, GuestManagementItem, RoleManagementItem, SpeakerManagementItem } from "./types/management";
+import LayoutPage from "./components/Layout/LayoutPage";
+
+const SettingsPage = lazy(() => import("./components/Settings/SettingsPage"));
 const TrackList = lazy(() => import("./components/Track/TrackList"));
 const SectionList = lazy(() => import("./components/Section/SectionList"));
 const FlyoverPanel = lazy(() => import("./components/Modal/FlyoverPanel"));
@@ -33,22 +36,26 @@ function App() {
     sectionstypes: [],
     guests: []
   });
-
-  const sectionTypes: SectionManagementItem[] = [
-    { id: '1', name: 'Regular Section', sectionType: 'regular', type: 'sectionstypes' },
-    { id: '2', name: 'Lunch Break', sectionType: 'lunch', type: 'sectionstypes' },
-    { id: '3', name: 'Break', sectionType: 'break', type: 'sectionstypes' }
-  ];
-
-  const headers: TableHeader[] = [
+  const [headers, setHeaders] = useState<TableHeader[]>([
     { id: "1", type: "indicator", label: "Level", isVisible: true },
     { id: "2", type: "time", label: "Time", isVisible: true },
-    { id: "3", type: "name", label: "Name", isVisible: true },
-    { id: "4", type: "speaker", label: "Speaker", isVisible: true },
-    { id: "5", type: "role", label: "Role", isVisible: true },
-    { id: "6", type: "actions", label: "Actions", isVisible: true },
-  ] as const;
-  
+  ]);
+
+  const tableStyles: TableStyles = {
+    headerColor: "#f3f4f6",
+    headerTextColor: "#374151",
+    cellTextColor: "#374151",
+    borderColor: "#e5e7eb",
+    cellBorderColor: "#e5e7eb",
+    headerBorderStyle: "solid",
+    cellBorderStyle: "solid",
+    tableBackgroundColor: "#ffffff",
+    mainSectionGradientStart: "#93c5fd80",
+    mainSectionGradientEnd: "#FFFFFF",
+    alternateRowColors: false,
+    alternateRowColor: "#f9fafb",
+  };
+
   const navigationItems = [
     { id: "schedule", label: "Schedule", icon: Calendar },
     { id: "data", label: "Data Management", icon: Database },
@@ -579,6 +586,17 @@ function App() {
     }));
   };
 
+  const handleUpdateSettings = (settings: any) => {
+    // Store settings in localStorage or state management
+    localStorage.setItem('appSettings', JSON.stringify(settings));
+    showToast.success('Settings updated successfully');
+  };
+
+  const handleUpdateHeaders = (updatedHeaders: TableHeader[]) => {
+    setHeaders(updatedHeaders);
+    showToast.success('Headers updated successfully');
+  };
+
   useEffect(() => {
     console.clear();
     console.log(tracks);
@@ -619,9 +637,12 @@ function App() {
                           sections={selectedTrack.sections}
                           onUpdateSection={handleUpdateSection}
                           activeTrack={selectedTrack}
+                          tracks={tracks}
+                          onSelectTrack={setSelectedTrackId}
                           setFlyoverState={setFlyoverState}
-                          sectionTypes={sectionTypes}
+                          currentStyles={tableStyles}
                           headers={headers}
+                          sectionTypes={managementData.sectionstypes}
                         />
                         {provided.placeholder}
                       </div>
@@ -650,6 +671,12 @@ function App() {
                   tracks: tracks,
                 }}
               />
+            )}
+            {activeTab === "settings" && (
+              <SettingsPage onUpdateSettings={handleUpdateSettings} />
+            )}
+            {activeTab === "layout" && (
+              <LayoutPage headers={headers} onUpdateHeaders={handleUpdateHeaders} />
             )}
           </Suspense>
         </ErrorBoundary>

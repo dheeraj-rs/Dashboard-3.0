@@ -1,3 +1,5 @@
+export type BorderStyle = 'solid' | 'dashed' | 'dotted' | 'none';
+
 export interface TableStyles {
   headerColor: string;
   headerTextColor: string;
@@ -12,8 +14,6 @@ export interface TableStyles {
   alternateRowColors: boolean;
   alternateRowColor: string;
 }
-
-export type BorderStyle = 'none' | 'hidden' | 'dotted' | 'dashed' | 'solid' | 'double' | 'groove' | 'ridge' | 'inset' | 'outset';
 
 export interface TableHeader {
   id: string;

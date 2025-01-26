@@ -62,10 +62,12 @@ export interface SectionListProps {
   sections: Section[];
   headers: TableHeader[];
   onUpdateSection: (sectionId: string, updates: Partial<Section>) => void;
-  activeTrack?: Track | null;
+  activeTrack: Track | null;
   setFlyoverState: (state: FlyoverState) => void;
   sectionTypes: SectionManagementItem[];
-  currentStyles?: TableStyles;
+  currentStyles: TableStyles;
+  tracks: Track[];
+  onSelectTrack: (trackId: string | null) => void;
 }
 
 export interface SectionFormProps {
