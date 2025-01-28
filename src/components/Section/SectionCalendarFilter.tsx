@@ -130,18 +130,28 @@ export default function SectionCalendarFilter({
         onClick={() => setIsOpen(!isOpen)}
         className={`
           flex w-full items-center justify-between px-4 py-2.5 
-          bg-white rounded-lg shadow-sm border 
-          ${activeFilter ? 'border-blue-200 bg-blue-50/50' : 'border-gray-200'} 
-          hover:bg-gray-50 transition-colors duration-200
+          bg-white dark:bg-slate-800 rounded-lg shadow-sm border 
+          ${activeFilter 
+            ? 'border-blue-200 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20' 
+            : 'border-gray-200 dark:border-gray-700'} 
+          hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors duration-200
         `}
       >
         <div className="flex items-center gap-1.5 sm:gap-2">
           {filterType === 'time' ? (
-            <Clock className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${activeFilter ? 'text-blue-600' : 'text-gray-400'}`} />
+            <Clock className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
+              activeFilter ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'
+            }`} />
           ) : (
-            <Calendar className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${activeFilter ? 'text-blue-600' : 'text-gray-400'}`} />
+            <Calendar className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
+              activeFilter ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'
+            }`} />
           )}
-          <span className={`text-xs sm:text-sm truncate ${activeFilter ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
+          <span className={`text-xs sm:text-sm truncate ${
+            activeFilter 
+              ? 'text-blue-700 dark:text-blue-300 font-medium' 
+              : 'text-gray-700 dark:text-gray-300'
+          }`}>
             {getFilterLabel()}
           </span>
         </div>
@@ -149,12 +159,12 @@ export default function SectionCalendarFilter({
           {activeFilter && (
             <button
               onClick={handleClearFilter}
-              className="p-0.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+              className="p-0.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 
+                rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           )}
-         
         </div>
       </button>
 
@@ -162,18 +172,19 @@ export default function SectionCalendarFilter({
       {isOpen && (
         <div 
           ref={dropdownRef}
-          className="absolute top-full left-0 w-full sm:w-full mt-2 bg-white rounded-lg shadow-lg 
-            border border-gray-200 z-30 min-w-[13rem] sm:min-w-[16rem]"
+          className="absolute top-full left-0 w-full sm:w-full mt-2 bg-white dark:bg-slate-800 rounded-lg 
+            shadow-lg border border-gray-200 dark:border-gray-700 z-30 min-w-[13rem] sm:min-w-[16rem]"
         >
-          <div className="flex gap-1 p-1.5 sm:p-2 border-b">
+          <div className="flex gap-1 p-1.5 sm:p-2 border-b border-gray-200 dark:border-gray-700">
             {(['time', 'day', 'month'] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => handleFilterTypeChange(type)}
-                className={`flex-1 px-2 sm:px-3 py-1 sm:py-1.5 text-nowrap rounded-md text-xs sm:text-sm font-medium transition-colors duration-200 ${
+                className={`flex-1 px-2 sm:px-3 py-1 sm:py-1.5 text-nowrap rounded-md text-xs sm:text-sm 
+                  font-medium transition-colors duration-200 ${
                   filterType === type
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 {type === 'time' ? 'By Time' : type === 'day' ? 'By Day' : 'By Month'}
@@ -190,14 +201,14 @@ export default function SectionCalendarFilter({
                   w-full px-3 sm:px-4 py-1.5 sm:py-2 text-left text-xs sm:text-sm rounded-md 
                   transition-colors duration-200 flex items-center justify-between
                   ${activeFilter?.type === 'time' && activeFilter.value.start === time
-                    ? 'bg-blue-50 text-blue-600 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-medium'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }
                 `}
               >
                 <span>{time}</span>
                 {activeFilter?.type === 'time' && activeFilter.value.start === time && (
-                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400"></div>
                 )}
               </button>
             ))}
@@ -210,14 +221,14 @@ export default function SectionCalendarFilter({
                   w-full px-4 py-2 text-left text-sm rounded-md 
                   transition-colors duration-200 flex items-center justify-between
                   ${activeFilter?.type === 'day' && activeFilter.value.day === day
-                    ? 'bg-blue-50 text-blue-600 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-medium'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }
                 `}
               >
                 <span>{day}</span>
                 {activeFilter?.type === 'day' && activeFilter.value.day === day && (
-                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400"></div>
                 )}
               </button>
             ))}
@@ -233,8 +244,8 @@ export default function SectionCalendarFilter({
                     w-full px-4 py-2 text-left text-sm rounded-md 
                     transition-colors duration-200 flex items-center justify-between
                     ${activeFilter?.type === 'month' && activeFilter.value.month === month
-                      ? 'bg-blue-50 text-blue-600 font-medium'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-medium'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }
                   `}
                 >
@@ -242,7 +253,7 @@ export default function SectionCalendarFilter({
                     {date.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
                   </span>
                   {activeFilter?.type === 'month' && activeFilter.value.month === month && (
-                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    <div className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400"></div>
                   )}
                 </button>
               );

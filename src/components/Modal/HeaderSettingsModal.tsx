@@ -9,7 +9,12 @@ const calculateTextColor = (backgroundColor: string): string => {
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? '#000000' : '#ffffff';
+  
+  // Adjust threshold for dark mode
+  const isDarkMode = document.documentElement.classList.contains('dark');
+  const threshold = isDarkMode ? 0.4 : 0.5;
+  
+  return luminance > threshold ? '#000000' : '#ffffff';
 };
 
 const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
@@ -95,6 +100,10 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
   }, [validateColor]);
 
   const handleSave = useCallback(() => {
+    // First apply the header changes
+    onUpdateHeaders(localHeaders);
+    
+    // Then apply the style changes with all required fields
     onApplyStyles({
       ...styles,
       tableBackgroundColor: styles.tableBackgroundColor || "#ffffff",
@@ -103,8 +112,15 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
       alternateRowColors: styles.alternateRowColors,
       alternateRowColor: styles.alternateRowColor || "#f9fafb",
       cellTextColor: styles.cellTextColor || "#374151",
+      headerColor: styles.headerColor || "#f3f4f6",
+      headerTextColor: styles.headerTextColor || "#374151",
+      borderColor: styles.borderColor || "#e5e7eb",
+      cellBorderColor: styles.cellBorderColor || "#e5e7eb",
+      headerBorderStyle: styles.headerBorderStyle || "solid",
+      cellBorderStyle: styles.cellBorderStyle || "solid",
     });
-    onUpdateHeaders(localHeaders);
+
+    // Close the modal after applying changes
     onClose();
   }, [onApplyStyles, styles, localHeaders, onUpdateHeaders, onClose]);
 
@@ -114,11 +130,11 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
   }, [defaultStyles, headers]);
 
   const StyleSection = React.memo(({ icon: Icon, title, children }: any) => (
-    <div className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 
-      shadow-sm hover:shadow-md transition-all duration-300 hover:border-gray-300">
-      <div className="flex items-center gap-2 mb-3">
-        <Icon className="w-5 h-5 text-gray-500" />
-        <label className="block text-sm font-medium text-gray-700">
+    <div className="p-4 bg-gradient-to-r from-gray-50 dark:from-slate-800 to-white dark:to-slate-900 rounded-xl border border-gray-200 dark:border-gray-700     
+      shadow-sm hover:shadow-md transition-all duration-300 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100      ">
+      <div className="flex items-center gap-2 mb-3 text-gray-700 dark:text-gray-300     ">
+        <Icon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300        ">
           {title}
         </label>
       </div>
@@ -133,42 +149,42 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
   }) => (
     <button
       onClick={() => setActiveTab(tab)}
-      className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium rounded-lg
-        transition-all duration-200 ${
+      className={`flex-1 flex items-center      justify-center gap-2 py-2 text-xs font-medium rounded-lg
+            transition-all duration-200      ${
         activeTab === tab
-          ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-md'
-          : 'text-gray-600 hover:bg-gray-50'
+          ? 'bg-gradient-to-r from-blue-600 dark:from-blue-400 to-violet-600 dark:to-violet-400 text-white shadow-md'
+          : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-slate-800'
       }`}
     >
-      <Icon className={`w-4 h-4 ${activeTab === tab ? 'text-white' : 'text-gray-500'}`} />
+      <Icon className={`w-4 h-4 ${activeTab === tab ? 'text-white' : 'text-gray-500 dark:text-gray-400        '}`} />
       {label}
     </button>
   ));
 
   const HeaderItem = React.memo(({ header }: { header: TableHeader }) => (
-    <div className="group flex items-center gap-3 p-3 bg-gradient-to-r from-gray-50 to-white 
-      rounded-lg border border-gray-200 shadow-sm hover:shadow-md 
-      transition-all duration-300 hover:border-gray-300">
+          <div className="group flex items-center gap-3 p-3 bg-gradient-to-r from-gray-50 dark:from-slate-800 to-white dark:to-slate-900 
+      rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md 
+      transition-all duration-300 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100">
       <div className="flex-1 flex items-center gap-2">
         <span className="text-xs font-medium text-gray-500">{header.type}</span>
         <input
           type="text"
           value={header.label}
           onChange={(e) => handleHeaderLabelChange(header.id, e.target.value)}
-          className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded-md
+          className="flex-1 px-2 py-1 text-sm border border-gray-200 dark:border-gray-700 rounded-md
             focus:ring-1 focus:ring-violet-500 focus:border-violet-500
-            transition-all duration-200 bg-white/50 hover:bg-white"
+            transition-all duration-200 bg-white/50 hover:bg-white dark:bg-slate-800/50 dark:hover:bg-slate-800/60 dark:text-gray-100"
         />
       </div>
       <button
         onClick={() => handleHeaderVisibilityChange(header.id)}
-        className="p-1 rounded-md hover:bg-gray-100 transition-colors group"
+        className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800/50 transition-colors group"
         title={header.isVisible ? "Hide Column" : "Show Column"}
       >
         {header.isVisible ? (
-          <Eye className="w-4 h-4 text-gray-500 group-hover:text-violet-600" />
+          <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-violet-600 dark:group-hover:text-violet-400" />
         ) : (
-          <EyeOff className="w-4 h-4 text-gray-400 group-hover:text-violet-600" />
+          <EyeOff className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-violet-600 dark:group-hover:text-violet-400" />
         )}
       </button>
     </div>
@@ -181,30 +197,30 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
       className="h-full flex flex-col"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="header-settings-title"
+      aria-labelledby="header-settings-title  "
     >
-      <div className="px-4 pt-3 border-b">
-        <h2 id="header-settings-title" className="sr-only">Header Settings</h2>
-        <div className="flex gap-1 mb-3">
+      <div className="px-4 pt-3 border-b bg-white dark:bg-slate-900">
+        <h2 id="header-settings-title text-gray-900 dark:text-gray-100    " className="sr-only">Header Settings</h2>
+        <div className="flex gap-1 mb-3 text-gray-700 dark:text-gray-300    ">
           <TabButton tab="headers" label="Headers" icon={Type} />
           <TabButton tab="styles" label="Styles" icon={Layout} />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
         <div className="p-4 space-y-4">
           {activeTab === 'headers' && (
-            <div className="space-y-2">
+            <div className="space-y-2 bg-white dark:bg-slate-900">
               {localHeaders.map((header) => (
                 <HeaderItem key={header.id} header={header} />
               ))}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-blue-600">
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
                   <Eye className="w-4 h-4" />
                   <span>Toggle column visibility</span>
                 </div>
               </div>
-            </div>
+            </div>      
           )}
 
           {activeTab === 'styles' && (
@@ -212,7 +228,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
               <StyleSection icon={Palette} title="Colors">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">Header Background</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Header Background</label>
                     <div className="space-y-2">
                       <input
                         type="color"
@@ -221,7 +237,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                         className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
                       />
                       <div 
-                        className="p-2 rounded text-center text-sm"
+                        className="p-2 rounded text-center text-sm text-gray-700 dark:text-gray-300"
                         style={{ 
                           backgroundColor: styles.headerColor,
                           color: styles.headerTextColor 
@@ -232,7 +248,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                     </div>
                   </div>
                   {/* <div>
-                    <label className="block text-sm text-gray-600 mb-2">Cell Background</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Cell Background</label>
                     <div className="space-y-2">
                       <input
                         type="color"
@@ -241,7 +257,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                         className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
                       />
                       <div 
-                        className="p-2 rounded text-center text-sm"
+                        className="p-2 rounded text-center text-sm text-gray-700 dark:text-gray-300"
                         style={{ 
                           backgroundColor: styles.tableBackgroundColor,
                           color: styles.cellTextColor 
@@ -257,7 +273,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
               <StyleSection icon={Grid} title="Borders">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">Header Border Color</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Header Border Color</label>
                     <input
                       type="color"
                       value={styles.borderColor}
@@ -266,7 +282,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">Cell Border Color</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Cell Border Color</label>
                     <input
                       type="color"
                       value={styles.cellBorderColor}
@@ -275,7 +291,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">Header Border Style</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Header Border Style</label>
                     <select
                       value={styles.headerBorderStyle}
                       onChange={(e) => handleStyleChange('headerBorderStyle', e.target.value as BorderStyle)}
@@ -289,7 +305,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">Cell Border Style</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Cell Border Style</label>
                     <select
                       value={styles.cellBorderStyle}
                       onChange={(e) => handleStyleChange('cellBorderStyle', e.target.value as BorderStyle)}
@@ -308,7 +324,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
               <StyleSection icon={Layout} title="Section Row Styling">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">Main Section Gradient Start</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Main Section Gradient Start</label>
                     <input
                       type="color"
                       value={styles.mainSectionGradientStart}
@@ -318,7 +334,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                   </div>
                   
                   <div>
-                    <label className="block text-sm text-gray-600 mb-2">Main Section Gradient End</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">Main Section Gradient End</label>
                     <input
                       type="color"
                       value={styles.mainSectionGradientEnd}
@@ -335,19 +351,19 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
                       onChange={(e) => handleStyleChange('alternateRowColors', e.target.checked)}
                       className="w-4 h-4 rounded text-violet-500 focus:ring-violet-500"
                     />
-                    <label htmlFor="alternateRows" className="text-sm text-gray-600">
+                    <label htmlFor="alternateRows" className="text-sm text-gray-700 dark:text-gray-300">
                       Alternate Main Section Row Colors
                     </label>
                   </div>
                   
                   {styles.alternateRowColors && (
                     <div>
-                      <label className="block text-sm text-gray-600 mb-2">Alternate Row Color</label>
+                      <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2 ">Alternate Row Color</label>
                       <input
                         type="color"
                         value={styles.alternateRowColor}
                         onChange={(e) => handleStyleChange('alternateRowColor', e.target.value)}
-                        className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105"
+                        className="w-full h-10 rounded-lg cursor-pointer transition-transform hover:scale-105 bg-white dark:bg-slate-800/50"
                       />
                     </div>
                   )}
@@ -358,12 +374,12 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
         </div>
       </div>
 
-      <div className="border-t bg-gradient-to-r from-gray-50 to-white p-4">
-        <div className="flex justify-end gap-2">
+      <div className="border-t bg-gradient-to-r from-gray-50 to-white p-4 dark:bg-slate-900">
+        <div className="flex justify-end gap-2 text-gray-700 dark:text-gray-300 ">
           {activeTab === 'styles' && (
             <button
               onClick={handleReset}
-              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white rounded-lg 
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white dark:bg-slate-800/50 rounded-lg 
                 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 
                 transition-all duration-200 flex items-center gap-1.5 button-pop"
             >
@@ -373,7 +389,7 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
           )}
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white rounded-lg 
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white dark:bg-slate-800/50  rounded-lg 
               border border-gray-200 hover:bg-gray-50 hover:border-gray-300 
               transition-all duration-200 button-pop"
           >
@@ -381,10 +397,10 @@ const HeaderSettingsModal: React.FC<HeaderSettingsModalProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r 
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r 
               from-blue-600 to-violet-600 rounded-lg hover:from-blue-700 
-              hover:to-violet-700 transition-all duration-200 shadow-sm 
-              hover:shadow-md button-pop"
+              hover:to-violet-700 transition-all duration-200 shadow-sm    
+              hover:shadow-md button-pop dark:text-gray-100 dark:bg-slate-800/50 dark:hover:bg-slate-800/60     " 
           >
             Apply
           </button>

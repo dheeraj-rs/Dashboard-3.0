@@ -103,8 +103,8 @@ export default function SectionForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-6">
-      <div className="text-xl font-semibold text-gray-900 mb-6">
+    <form onSubmit={handleSubmit} className="space-y-4 p-6 bg-white dark:bg-slate-900/50 border border-gray-200  dark:border-slate-700 rounded-xl">
+      <div className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 ">
         {initialData?.id
           ? isSubsection
             ? "Edit Subsection"
@@ -119,7 +119,7 @@ export default function SectionForm({
           <div>
             <label
               htmlFor="sectionType"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Section Type
             </label>
@@ -144,7 +144,9 @@ export default function SectionForm({
                   }),
                 }));
               }}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 
+                bg-white dark:bg-slate-800 px-3 py-2 text-gray-900 dark:text-gray-100
+                focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
               required
             >
               <option value="">Select a type</option>
@@ -162,7 +164,7 @@ export default function SectionForm({
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
             Subsection Name
           </label>
@@ -172,7 +174,9 @@ export default function SectionForm({
             value={formData.name}
             onChange={(e) => handleChange("name", e.target.value)}
             placeholder="Enter subsection name"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 
+              bg-white dark:bg-slate-800 px-3 py-2 text-gray-900 dark:text-gray-100
+              focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
             required
           />
         </div>
@@ -191,7 +195,9 @@ export default function SectionForm({
               id="speaker"
               value={formData.speaker}
               onChange={(e) => handleChange("speaker", e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 
+                bg-white dark:bg-slate-800 px-3 py-2 text-gray-900 dark:text-gray-100
+                focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
             >
               <option value="">Select a speaker</option>
               {speakers.map((speaker) => (
@@ -212,7 +218,9 @@ export default function SectionForm({
               id="role"
               value={formData.role}
               onChange={(e) => handleChange("role", e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 
+                bg-white dark:bg-slate-800 px-3 py-2 text-gray-900 dark:text-gray-100
+                focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
             >
               <option value="">Select a role</option>
               {roles.map((role) => (
@@ -241,7 +249,9 @@ export default function SectionForm({
             onChange={(e) =>
               handleChange("timeSlot", { ...timeSlot, start: e.target.value })
             }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 
+              bg-white dark:bg-slate-800 px-3 py-2 text-gray-900 dark:text-gray-100
+              focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
             required
           />
         </div>
@@ -259,7 +269,9 @@ export default function SectionForm({
             onChange={(e) =>
               handleChange("timeSlot", { ...timeSlot, end: e.target.value })
             }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-700 
+              bg-white dark:bg-slate-800 px-3 py-2 text-gray-900 dark:text-gray-100
+              focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
             required
           />
         </div>

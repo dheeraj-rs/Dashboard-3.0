@@ -123,23 +123,23 @@ export default function DataSeedingPage({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6 sm:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 dark:from-gray-900 to-gray-100 dark:to-gray-800 p-6 sm:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Enhanced Header Section */}
-        <div className="flex flex-wrap flex-col sm:flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="flex flex-wrap flex-col sm:flex-row items-center justify-between gap-4  bg-white/80 dark:bg-gray-900 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 dark:from-gray-50 to-gray-700 dark:to-gray-500 bg-clip-text text-transparent">
               Data Seeding
             </h1>
             <button
               onClick={handleToggleAll}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium 
-                bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 
-                rounded-lg hover:from-gray-100 hover:to-gray-200 
+                bg-gradient-to-r from-gray-50 dark:from-gray-900 to-gray-100 dark:to-gray-800 border border-gray-200 dark:border-gray-700 
+                rounded-lg hover:from-gray-100 dark:hover:from-gray-800 hover:to-gray-200 dark:hover:to-gray-700 
                 transition-all duration-200 shadow-sm hover:shadow-md button-pop"
             >
-              <CheckSquare className="w-5 h-5 text-gray-700 icon-spin" />
-              <span className="text-gray-700 whitespace-nowrap">
+              <CheckSquare className="w-5 h-5 text-gray-700 icon-spin dark:text-gray-300" />
+              <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
                 {selectedTypes.length === dataTypes.length ? 'Deselect All' : 'Select All'}
               </span>
             </button>
@@ -150,8 +150,8 @@ export default function DataSeedingPage({
               onClick={handleSeedSelected}
               disabled={selectedTypes.length === 0}
               className="flex items-center justify-center gap-2 px-6 py-3 
-                bg-gradient-to-r from-blue-500 to-violet-500 text-white font-medium 
-                rounded-lg hover:from-blue-600 hover:to-violet-600 
+                bg-gradient-to-r from-blue-500 dark:from-blue-600 to-violet-500 dark:to-violet-600 text-white font-medium 
+                rounded-lg hover:from-blue-600 dark:hover:from-blue-700 hover:to-violet-600 dark:hover:to-violet-700 
                 transition-all duration-200 shadow-sm hover:shadow-md 
                 disabled:opacity-50 disabled:cursor-not-allowed 
                 disabled:hover:shadow-none button-pop w-full sm:w-auto"
@@ -164,8 +164,8 @@ export default function DataSeedingPage({
               onClick={handleClearSelected}
               disabled={selectedTypes.length === 0}
               className="flex items-center justify-center gap-2 px-6 py-3 
-                bg-gradient-to-r from-pink-500 to-rose-500 text-white font-medium 
-                rounded-lg hover:from-pink-600 hover:to-rose-600 
+                bg-gradient-to-r from-pink-500 dark:from-pink-600 to-rose-500 dark:to-rose-600 text-white font-medium 
+                  rounded-lg hover:from-pink-600 dark:hover:from-pink-700 hover:to-rose-600 dark:hover:to-rose-700 
                 transition-all duration-200 shadow-sm hover:shadow-md 
                 disabled:opacity-50 disabled:cursor-not-allowed 
                 disabled:hover:shadow-none button-pop w-full sm:w-auto"
@@ -183,27 +183,27 @@ export default function DataSeedingPage({
               key={type.id}
               onClick={() => handleToggleType(type.id)}
               className={`
-                cursor-pointer p-6 bg-white/80 backdrop-blur-sm rounded-xl 
+                cursor-pointer p-6 bg-white/80 dark:bg-gray-900 backdrop-blur-sm rounded-xl 
                 transition-all duration-300 group perspective-1000
                 hover-lift hover-glow
                 ${selectedTypes.includes(type.id)
                   ? 'border-2 border-blue-400 bg-blue-50/80'
-                  : 'border border-gray-200 hover:border-blue-200'}
+                  : 'border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-700'}
               `}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 dark:from-gray-50 to-gray-700 dark:to-gray-500 bg-clip-text text-transparent">
                   {type.label}
                 </h3>
-                <span className="text-sm bg-gradient-to-r from-gray-100 to-gray-50 
-                  px-3 py-1 rounded-full text-gray-700 border border-gray-200 
-                  group-hover:from-blue-50 group-hover:to-blue-100 
+                <span className="text-sm bg-gradient-to-r from-gray-100 dark:from-gray-900 to-gray-50 dark:to-gray-800 
+                  px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 
+                  group-hover:from-blue-50 group-hover:to-blue-100 dark:group-hover:from-blue-600 dark:group-hover:to-blue-700 
                   transition-all duration-300">
                   {type.count}
                 </span>
               </div>
               
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 ">
                 <span>Current Count:</span>
                 <span className="font-medium">
                   {type.id === 'tracks' 
@@ -214,7 +214,7 @@ export default function DataSeedingPage({
 
               {/* Card Shine Effect */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100
-                bg-gradient-to-r from-transparent via-white/10 to-transparent
+                bg-gradient-to-r from-transparent via-white/10 dark:via-gray-900 to-transparent
                 -translate-x-full group-hover:translate-x-full transition-all 
                 duration-1000 ease-in-out rounded-xl"
               />

@@ -40,21 +40,20 @@ function App() {
     { id: "1", type: "indicator", label: "Level", isVisible: true },
     { id: "2", type: "time", label: "Time", isVisible: true },
   ]);
-
-  const tableStyles: TableStyles = {
-    headerColor: "#f3f4f6",
+  const [tableStyles, setTableStyles] = useState<TableStyles>({
+    headerColor: "#f3f4f6"  ,
     headerTextColor: "#374151",
     cellTextColor: "#374151",
     borderColor: "#e5e7eb",
     cellBorderColor: "#e5e7eb",
     headerBorderStyle: "solid",
     cellBorderStyle: "solid",
-    tableBackgroundColor: "#ffffff",
-    mainSectionGradientStart: "#93c5fd80",
+    tableBackgroundColor: "#ffffff ",
+    mainSectionGradientStart: "#E2E8F0",
     mainSectionGradientEnd: "#FFFFFF",
     alternateRowColors: false,
     alternateRowColor: "#f9fafb",
-  };
+  });
 
   const navigationItems = [
     { id: "schedule", label: "Schedule", icon: Calendar },
@@ -597,10 +596,28 @@ function App() {
     showToast.success('Headers updated successfully');
   };
 
+  const handleApplyStyles = (newStyles: TableStyles) => {
+    setTableStyles(newStyles);
+    // Optional: Save to localStorage for persistence
+    localStorage.setItem('tableStyles', JSON.stringify(newStyles));
+  };
+
   useEffect(() => {
     console.clear();
     console.log(tracks);
   }, [tracks]);
+
+  useEffect(() => {
+    const savedStyles = localStorage.getItem('tableStyles');
+    if (savedStyles) {
+      try {
+        const parsedStyles = JSON.parse(savedStyles);
+        setTableStyles(parsedStyles);
+      } catch (error) {
+        console.error('Error loading saved styles:', error);
+      }
+    }
+  }, []);
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -637,12 +654,15 @@ function App() {
                           sections={selectedTrack.sections}
                           onUpdateSection={handleUpdateSection}
                           activeTrack={selectedTrack}
-                          tracks={tracks}
-                          onSelectTrack={setSelectedTrackId}
                           setFlyoverState={setFlyoverState}
                           currentStyles={tableStyles}
+                          tracks={tracks}
+                          onSelectTrack={setSelectedTrackId}
                           headers={headers}
                           sectionTypes={managementData.sectionstypes}
+                          onApplyStyles={handleApplyStyles}
+                          tableStyles={tableStyles}
+                          setTableStyles={setTableStyles}
                         />
                         {provided.placeholder}
                       </div>

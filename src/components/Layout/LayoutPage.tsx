@@ -74,18 +74,18 @@ const LayoutCard = ({ layout, isSelected, onSelect }: {
   return (
     <Card
       className={`
-        overflow-hidden transition-all duration-200 cursor-pointer
+        overflow-hidden transition-all  duration-200 cursor-pointer
         hover:shadow-lg group relative
         ${isSelected 
-          ? 'ring-2 ring-violet-500 ring-offset-2' 
-          : 'hover:ring-1 hover:ring-violet-200'
+          ? 'ring-2 border-gradient-to-r from-violet-500 to-violet-600 text-white shadow-lg' 
+          : 'hover:ring-1 hover:ring-violet-500 dark:hover:ring-violet-700'
         }
       `}
       onClick={() => onSelect(layout.id)}
     >
       {/* Preview Image */}
-      <div className="relative aspect-video overflow-hidden bg-slate-100 dark:bg-slate-800">
-        <div className="absolute inset-0 bg-gradient-to-tr from-black/5 to-black/0" />
+      <div className="relative aspect-video overflow-hidden bg-slate-100  dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div className="absolute inset-0 bg-gradient-to-tr from-black/5 to-black/0 dark:from-black/5 dark:to-black/0" />
         <img
           src={layout.preview}
           alt={layout.name}
@@ -105,10 +105,10 @@ const LayoutCard = ({ layout, isSelected, onSelect }: {
 
       {/* Layout Info */}
       <div className="p-4">
-        <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-1">
+        <h3 className="font-semibold text-slate-800 bg-gradient-to-r from-gray-900 dark:from-gray-50 to-gray-700 dark:to-gray-500 bg-clip-text text-transparent mb-1">
           {layout.name}
         </h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+        <p className="text-sm text-slate-600  mb-3 line-clamp-2 dark:text-slate-300 ">
           {layout.description}
         </p>
         
@@ -118,7 +118,7 @@ const LayoutCard = ({ layout, isSelected, onSelect }: {
             {layout.features.map((feature, index) => (
               <span
                 key={index}
-                className="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                className="text-xs px-2 py-1 rounded-full  bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-gray-200 dark:border-gray-700"
               >
                 {feature}
               </span>
@@ -131,9 +131,9 @@ const LayoutCard = ({ layout, isSelected, onSelect }: {
       <div className="p-4 pt-0">
         <button
           className="w-full flex items-center justify-center gap-2 px-4 py-2 
-            bg-slate-100 dark:bg-slate-800 rounded-lg
-            text-sm font-medium text-slate-700 dark:text-slate-300
-            hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            bg-slate-100 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg
+            text-sm font-medium text-slate-700  dark:text-slate-300
+            hover:bg-slate-200 dark:hover:bg-slate-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
         >
           Preview Layout
           <ChevronRight className="w-4 h-4" />
@@ -169,19 +169,19 @@ export default function LayoutPage({ headers, onUpdateHeaders }: LayoutPageProps
   }, [selectedLayout, headers, onUpdateHeaders]);
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto max-w-7xl bg-white/80 dark:bg-gray-900 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700  ">
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">
+        <h1 className="text-2xl font-bold text-slate-800 bg-gradient-to-r from-gray-900 dark:from-gray-50 to-gray-700 dark:to-gray-500 bg-clip-text text-transparent mb-2">
           Choose Your View
         </h1>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-slate-600 dark:text-slate-400 text-sm  ">
           Select between scheduler and dashboard layouts for your workspace
         </p>
       </div>
 
       {/* Category Navigation */}
-      <div className="flex gap-4 mb-8 overflow-x-auto pb-2 custom-scrollbar">
+      <div className="flex gap-4 mb-8 overflow-x-auto pb-2 custom-scrollbar ">
         {categories.map(category => (
           <button
             key={category.id}
@@ -190,8 +190,8 @@ export default function LayoutPage({ headers, onUpdateHeaders }: LayoutPageProps
               flex items-center gap-2 px-4 py-2 rounded-lg transition-all
               whitespace-nowrap
               ${activeCategory === category.id
-                ? 'bg-gradient-to-r from-violet-500 to-violet-600 text-white shadow-md'
-                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                ? 'bg-gradient-to-r from-violet-500 dark:from-violet-600 to-violet-600 text-white shadow-md'
+                : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
               }
             `}
           >
@@ -202,7 +202,7 @@ export default function LayoutPage({ headers, onUpdateHeaders }: LayoutPageProps
       </div>
 
       {/* Layout Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
         {filteredLayouts.map((layout) => (
           <LayoutCard
             key={layout.id}
@@ -217,10 +217,10 @@ export default function LayoutPage({ headers, onUpdateHeaders }: LayoutPageProps
       {selectedLayout && (
         <div className="mt-8">
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">
+            <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-900 dark:from-gray-50 to-gray-700 dark:to-gray-500 bg-clip-text text-transparent mb-4">
               Layout Preview
             </h2>
-            <ScrollArea className="h-[400px] rounded-lg border">
+            <ScrollArea className="h-[400px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900 backdrop-blur-sm shadow-sm">
               <div className="p-4">
                 <img
                   src={layoutOptions.find(l => l.id === selectedLayout)?.preview}

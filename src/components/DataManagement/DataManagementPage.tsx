@@ -84,22 +84,22 @@ export default function ResponsiveDataManagementPage({
   };
 
   return (
-    <div className="container mx-auto px-4 space-y-6 max-w-7xl">
+    <div className="container mx-auto px-4 space-y-6 max-w-7xl bg-white/80 dark:bg-gray-900 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
       {/* Mobile Menu Toggle for Tabs */}
-      <div className="md:hidden flex justify-between items-center mb-4">
-        <h1 className="text-xl font-semibold text-slate-800">Data Management</h1>
+      <div className="md:hidden flex justify-between items-center mb-4 bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-gray-200">
+        <h1 className="text-xl font-semibold text-slate-800 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Data Management</h1>
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 text-slate-600 hover:text-slate-800"
+          className="p-2 text-slate-600 dark:text-slate-400    hover:text-slate-800  button-pop"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
       {/* Header with Tabs */}
-      <div className="bg-white rounded-xl shadow-sm p-4">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <h1 className="hidden md:block text-2xl font-semibold text-slate-800">Data Management</h1>
+      <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200 backdrop-blur-sm dark:bg-gray-900 dark:border-gray-700     ">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between ">
+          <h1 className="hidden md:block text-2xl font-semibold text-slate-800  bg-gradient-to-r  from-gray-900 dark:from-gray-50 to-gray-700  dark:to-gray-500 bg-clip-text text-transparent ">Data Management</h1>
           <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={() => setFlyoverState({
@@ -114,11 +114,11 @@ export default function ResponsiveDataManagementPage({
                 data: null,
               })}
               className="flex items-center gap-2 px-3 py-2 w-full sm:w-auto justify-center 
-                bg-gradient-to-r from-blue-600 to-violet-600 
-                text-white rounded-lg hover:from-blue-700 hover:to-violet-700 
-                transition-all duration-200 shadow-sm hover:shadow-md text-sm"
+                bg-gradient-to-r from-gray-50 dark:from-gray-900 to-gray-100 dark:to-gray-800 border dark:border-gray-700     
+                rounded-lg hover:from-gray-100 hover:to-gray-200 
+                transition-all duration-200 shadow-sm hover:shadow-md text-sm button-pop text-gray-700 dark:text-gray-300"
             >
-              <Plus className="w-4 h-4 mr-1" />
+              <Plus className="w-4 h-4 mr-1 text-gray-700 dark:text-gray-300" />
               <span>Add New {activeTab.slice(0, -1)}</span>
             </button>
           </div>
@@ -161,12 +161,12 @@ export default function ResponsiveDataManagementPage({
           placeholder={`Search ${activeTab}...`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 pr-10 border border-gray-200 rounded-lg 
-            focus:outline-none focus:ring-2 focus:ring-violet-500/20 
-            focus:border-violet-500/30 placeholder-gray-400 
+          className="w-full px-4 py-2 pr-10 border bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 rounded-lg 
+            focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:focus:ring-violet-500/20 
+            focus:border-violet-500/30 dark:focus:border-violet-500/30 placeholder-gray-400 dark:placeholder-gray-600 
             transition-all duration-200"
         />
-        <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+        <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 dark:text-gray-600" />
       </div>
 
       {/* Data Grid */}
@@ -177,20 +177,20 @@ export default function ResponsiveDataManagementPage({
           return (
             <div
               key={item.id}
-              className="group relative bg-gradient-to-br from-white to-gray-50/50 
-                rounded-xl border border-gray-200/80 p-4 
+              className="group relative bg-gradient-to-br from-white dark:from-gray-900 to-gray-50/50 
+                rounded-xl border border-gray-200 dark:border-gray-700 p-4 
                 shadow-sm hover:shadow-md transition-all duration-200"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-grow">
-                  <h3 className="font-medium text-gray-900 truncate">{item.name}</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{item.name}</h3>
                   {itemDetails.subtitle && (
-                    <p className="text-sm text-gray-500">{itemDetails.subtitle}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{itemDetails.subtitle}</p>
                   )}
                 </div>
                 {item.color && (
                   <div 
-                    className="ml-2 w-6 h-6 flex-shrink-0 rounded-full border-2 border-white shadow-sm"
+                      className="ml-2 w-6 h-6 flex-shrink-0 rounded-full border-2 border-white shadow-sm"
                     style={{ backgroundColor: item.color }}
                   />
                 )}
@@ -200,10 +200,10 @@ export default function ResponsiveDataManagementPage({
                 {itemDetails.details.map((detail, index) => 
                   detail.value && (
                     <div key={index} className="flex flex-col">
-                      <span className="text-xs font-medium text-gray-500">
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                         {detail.label}
                       </span>
-                      <span className="text-sm text-gray-700 break-words">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 break-words">
                         {detail.value}
                       </span>
                     </div>
@@ -212,10 +212,10 @@ export default function ResponsiveDataManagementPage({
                 
                 {item.description && (
                   <div className="flex flex-col mt-2 pt-2 border-t border-gray-100">
-                    <span className="text-xs font-medium text-gray-500">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                       Description
                     </span>
-                    <p className="text-sm text-gray-700 line-clamp-2">
+                    <p className="text-sm text-gray-700 dark:text-gray-300  line-clamp-2">
                       {item.description}
                     </p>
                   </div>
@@ -238,15 +238,15 @@ export default function ResponsiveDataManagementPage({
                       : 'edit-role',
                     data: item,
                   })}
-                  className="p-1 text-gray-400 hover:text-violet-600 rounded-lg 
+                  className="p-1 text-gray-400 dark:text-gray-600 hover:text-violet-600 rounded-lg 
                     hover:bg-violet-50 transition-colors"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onDeleteItem(activeTab, item.id)}
-                  className="p-1 text-gray-400 hover:text-red-600 rounded-lg 
-                    hover:bg-red-50 transition-colors"
+                  className="p-1 text-gray-400 dark:text-gray-600 hover:text-red-600 rounded-lg 
+                    hover:bg-red-50 dark:hover:bg-red-900 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

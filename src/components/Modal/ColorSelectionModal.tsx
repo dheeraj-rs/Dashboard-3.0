@@ -3,15 +3,60 @@ import Modal from './Modal';
 import { Check } from 'lucide-react';
 
 const colorOptions = [
-  { name: 'Blue', class: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { name: 'Green', class: 'bg-green-100', hover: 'hover:bg-green-200' },
-  { name: 'Purple', class: 'bg-purple-100', hover: 'hover:bg-purple-200' },
-  { name: 'Orange', class: 'bg-orange-100', hover: 'hover:bg-orange-200' },
-  { name: 'Pink', class: 'bg-pink-100', hover: 'hover:bg-pink-200' },
-  { name: 'Yellow', class: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { name: 'Teal', class: 'bg-teal-100', hover: 'hover:bg-teal-200' },
-  { name: 'Indigo', class: 'bg-indigo-100', hover: 'hover:bg-indigo-200' },
-  { name: 'Red', class: 'bg-red-100', hover: 'hover:bg-red-200' },
+  { 
+    name: 'Blue', 
+    class: 'bg-blue-100 dark:bg-blue-900/30', 
+    hover: 'hover:bg-blue-200 dark:hover:bg-blue-800/40',
+    darkClass: 'dark:bg-blue-800/20'
+  },
+  { 
+    name: 'Green', 
+    class: 'bg-green-100 dark:bg-green-900/30', 
+    hover: 'hover:bg-green-200 dark:hover:bg-green-800/40',
+    darkClass: 'dark:bg-green-800/20'
+  },
+  { 
+    name: 'Purple', 
+    class: 'bg-purple-100 dark:bg-purple-900/30', 
+    hover: 'hover:bg-purple-200 dark:hover:bg-purple-800/40',
+    darkClass: 'dark:bg-purple-800/20'
+  },
+  { 
+    name: 'Orange', 
+    class: 'bg-orange-100 dark:bg-orange-900/30', 
+    hover: 'hover:bg-orange-200 dark:hover:bg-orange-800/40',
+    darkClass: 'dark:bg-orange-800/20'
+  },
+  { 
+    name: 'Pink', 
+    class: 'bg-pink-100 dark:bg-pink-900/30', 
+    hover: 'hover:bg-pink-200 dark:hover:bg-pink-800/40',
+    darkClass: 'dark:bg-pink-800/20'
+  },
+  { 
+    name: 'Yellow', 
+    class: 'bg-yellow-100 dark:bg-yellow-900/30', 
+    hover: 'hover:bg-yellow-200 dark:hover:bg-yellow-800/40',
+    darkClass: 'dark:bg-yellow-800/20'
+  },
+  { 
+    name: 'Teal', 
+    class: 'bg-teal-100 dark:bg-teal-900/30', 
+    hover: 'hover:bg-teal-200 dark:hover:bg-teal-800/40',
+    darkClass: 'dark:bg-teal-800/20'
+  },
+  { 
+    name: 'Indigo', 
+    class: 'bg-indigo-100 dark:bg-indigo-900/30', 
+    hover: 'hover:bg-indigo-200 dark:hover:bg-indigo-800/40',
+    darkClass: 'dark:bg-indigo-800/20'
+  },
+  { 
+    name: 'Red', 
+    class: 'bg-red-100 dark:bg-red-900/30', 
+    hover: 'hover:bg-red-200 dark:hover:bg-red-800/40',
+    darkClass: 'dark:bg-red-800/20'
+  },
 ] as const;
 
 export interface ColorSelectionModalProps {

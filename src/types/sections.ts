@@ -65,9 +65,12 @@ export interface SectionListProps {
   activeTrack: Track | null;
   setFlyoverState: (state: FlyoverState) => void;
   sectionTypes: SectionManagementItem[];
-  currentStyles: TableStyles;
+  tableStyles: TableStyles;
   tracks: Track[];
   onSelectTrack: (trackId: string | null) => void;
+  onApplyStyles: (styles: TableStyles) => void;
+  setTableStyles: (styles: TableStyles) => void;
+  currentStyles: TableStyles;
 }
 
 export interface SectionFormProps {

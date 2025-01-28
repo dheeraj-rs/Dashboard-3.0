@@ -41,25 +41,25 @@ const MAX_SECTION_DEPTH = 10;
 
 const sectionLevelColors = {
   0: {
-    bg: "bg-gradient-to-r from-white to-blue-50/30",
-    border: "border-l-[3px] border-l-blue-500",
-    text: "text-gray-900",
-    hover: "hover:bg-blue-50/40",
-    indicator: "bg-gradient-to-r from-blue-500 to-blue-600",
+    bg: "bg-gradient-to-r from-white dark:from-slate-900 to-blue-50/30 dark:to-blue-900/10",
+    border: "border-l-[3px] border-l-blue-500 dark:border-l-blue-400",
+    text: "text-gray-900 dark:text-gray-900 ",
+    hover: "hover:bg-blue-50/40 dark:hover:bg-blue-900/20",
+    indicator: "bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-500",
   },
   1: {
-    bg: "bg-gradient-to-r from-white to-indigo-50/20",
-    border: "border-l-[3px] border-l-indigo-400",
-    text: "text-gray-800",
-    hover: "hover:bg-indigo-50/30",
-    indicator: "bg-gradient-to-r from-indigo-400 to-indigo-500",
+    bg: "bg-gradient-to-r from-white dark:from-slate-900 to-indigo-50/20 dark:to-indigo-900/10",
+    border: "border-l-[3px] border-l-indigo-400 dark:border-l-indigo-300",
+    text: "text-gray-800 dark:text-gray-200",
+    hover: "hover:bg-indigo-50/30 dark:hover:bg-indigo-900/20",
+    indicator: "bg-gradient-to-r from-indigo-400 to-indigo-500 dark:from-indigo-300 dark:to-indigo-400",
   },
   2: {
-    bg: "bg-gradient-to-r from-white to-violet-50/10",
-    border: "border-l-[3px] border-l-violet-400",
-    text: "text-gray-700",
-    hover: "hover:bg-violet-50/20",
-    indicator: "bg-gradient-to-r from-violet-400 to-violet-500",
+    bg: "bg-gradient-to-r from-white dark:from-slate-900 to-violet-50/10 dark:to-violet-900/10",
+    border: "border-l-[3px] border-l-violet-400 dark:border-l-violet-300",
+    text: "text-gray-700 dark:text-gray-300",
+    hover: "hover:bg-violet-50/20 dark:hover:bg-violet-900/20",
+    indicator: "bg-gradient-to-r from-violet-400 to-violet-500 dark:from-violet-300 dark:to-violet-400",
   },
 };
 
@@ -1130,58 +1130,59 @@ function SectionList({
 
     return (
       <div className="w-full sm:w-auto flex-shrink-0 flex flex-col sm:flex-row items-center gap-2">
-        <span className="text-sm font-medium bg-gray-50/80 px-3 py-1.5 rounded-md whitespace-nowrap">
-            {selection.selectedCells.length} cells selected (
-            {Array.from(uniqueColumnTypes).join(", ")})
-          </span>
-          <div className="flex items-center gap-2">
-            {hasMergedCells && (
-              <button
-                onClick={() => {
-                  uniqueMergeIds.forEach((mergeId) => {
-                    if (mergeId) {
-                      const cell = selection.selectedCells.find(
-                        (c) => c.mergeId === mergeId
-                      );
-                      if (cell)
-                        handleUnmergeSelection(mergeId, cell.columnType);
-                    }
-                  });
-                }}
-                className="inline-flex items-center px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-md transition-colors duration-200"
-              >
-                <Unlink className="w-4 h-4 mr-2" />
-                <span className="inline">Unmerge</span>
-              </button>
-            )}
-            <div className="flex items-center">
-              <button
-                onClick={() => setShowColorModal(true)}
-                disabled={selection.selectedCells.length < 1}
-                className={`inline-flex items-center px-3 py-1.5 text-sm rounded-l-md transition-colors duration-200 ${
-                  selection.selectedCells.length < 1
-                    ? "bg-gray-200 text-gray-500"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700"
-                }`}
-              >
-                <Link className="w-4 h-4 mr-2" />
-                <span className="inline">
-                  {hasMergedCells ? "New Merge" : "Merge"}
-                </span>
-              </button>
-              <button
-                onClick={handleCancelSelection}
-                className={`inline-flex items-center px-3 py-1.5 text-sm rounded-r-md border-l border-indigo-500 transition-colors duration-200 ${
-                  selection.selectedCells.length < 1
-                    ? "bg-gray-300 text-gray-600 border-gray-600"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700 border-indigo-100"
-                }`}
-                title="Cancel Selection"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+        <span className="text-sm font-medium gap-1 bg-gradient-to-br from-white/90 to-gray-50/80 dark:from-slate-900/90 dark:to-slate-800/80 backdrop-blur-sm border border-gray-100/80 dark:border-gray-800/80 text-gray-600 dark:text-gray-300 rounded-xl p-1 shadow-sm transition-all duration-300 hover:shadow-md py-2.5 px-3 whitespace-nowrap">
+          {selection.selectedCells.length} cells selected (
+          {Array.from(uniqueColumnTypes).join(", ")})
+        </span>
+        <div className="flex items-center gap-2">
+          {hasMergedCells && (
+            <button
+              onClick={() => {
+                uniqueMergeIds.forEach((mergeId) => {
+                  if (mergeId) {
+                    const cell = selection.selectedCells.find(
+                      (c) => c.mergeId === mergeId
+                    );
+                    if (cell)
+                      handleUnmergeSelection(mergeId, cell.columnType);
+                  }
+                });
+              }}
+              className="inline-flex items-center px-3 py-2.5 text-sm bg-gradient-to-br from-red-50 to-red-100/80 dark:from-red-500/10 dark:to-red-600/5 text-red-700 dark:text-red-400 hover:from-red-100 hover:to-red-200/80 dark:hover:from-red-500/20 dark:hover:to-red-600/10 rounded-md transition-all duration-200 group"
+            >
+              <Unlink className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+              <span className="inline">Unmerge</span>
+            </button>
+          )}
+          
+          {/* Merge Button */}
+          <button
+            onClick={() => setShowColorModal(true)}
+            disabled={selection.selectedCells.length < 1}
+            className={`inline-flex items-center px-4 py-2.5 text-sm rounded-md transition-all duration-200 ${
+              selection.selectedCells.length < 1
+                ? "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800/50 dark:to-gray-900/50 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-br from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-500 dark:hover:from-blue-400 dark:hover:to-indigo-400 hover:shadow-lg hover:shadow-blue-500/25 dark:hover:shadow-blue-500/15"
+            }`}
+          >
+            <Link className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform duration-200" />
+            <span className="inline">
+              {hasMergedCells ? "New Merge" : "Merge"}
+            </span>
+          </button>
+          <button
+            onClick={handleCancelSelection}
+            className={`inline-flex items-center px-4 py-2.5 text-sm rounded-md transition-all duration-200 ${
+              selection.selectedCells.length < 1
+                ? "bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-900 text-gray-600 dark:text-gray-400"
+                : "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-700 hover:shadow-md active:scale-95"
+            }`}
+            title="Cancel Selection"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Cancel
+          </button>
+        </div>
       </div>
     );
   }, [handleUnmergeSelection, selection.selectedCells]);
@@ -1203,10 +1204,10 @@ function SectionList({
 
     return (
       <div className="w-full sm:w-auto flex flex-wrap items-center gap-3">
-        <div className="flex w-full sm:w-auto  justify-evenly sm:justify-center sm:items-center gap-1 bg-white/70 backdrop-blur-sm border border-gray-100 rounded-xl p-1 shadow-sm transition-all duration-300 hover:shadow-md">
+        <div className="flex w-full sm:w-auto  justify-evenly sm:justify-center sm:items-center gap-1 bg-white/70 dark:bg-slate-900 backdrop-blur-sm border border-gray-100  dark:border-gray-800  rounded-xl p-1 shadow-sm transition-all duration-300 hover:shadow-md">
           <button
             onClick={() => setIsFullScreen((prev) => !prev)}
-            className="p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50/80 transition-all duration-200 group relative"
+            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-900/10 transition-all duration-200 group relative"
             title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           >
             {isFullScreen ? (
@@ -1220,15 +1221,15 @@ function SectionList({
               if (selection.isSelecting) handleCancelSelection();
               else setSelection((prev) => ({ ...prev, isSelecting: true }));
             }}
-            className="p-2 rounded-lg transition-all duration-200 group relative"
+            className="p-2 rounded-lg transition-all duration-200 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-900/10 group relative"
           >
             {selection.isSelecting ? (
-              <TableProperties className="w-4 h-4 text-blue-500 transform group-hover:scale-110 transition-transform" />
+              <TableProperties className="w-4 h-4 text-blue-500  dark:text-blue-400  transform group-hover:scale-110 transition-transform" />
             ) : (
-              <Table className="w-4 h-4 text-gray-600 transform group-hover:scale-110 transition-transform" />
+              <Table className="w-4 h-4 text-gray-600 dark:text-gray-400 transform  group-hover:scale-110 transition-transform" />
             )}
             {selection.isSelecting && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
             )}
           </button>
           <button
@@ -1258,7 +1259,7 @@ function SectionList({
                 },
               })
             }
-            className="p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50/80 transition-all duration-200 group relative"
+            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-900/10 transition-all duration-200 group relative"
           >
             <Settings className="w-4 h-4 transform group-hover:rotate-90 transition-transform duration-300" />
           </button>
@@ -1447,14 +1448,14 @@ function SectionList({
     <div
       className={`${
         isFullScreen
-          ? "fixed inset-0 z-40 bg-white overflow-auto"
+          ? "fixed inset-0 z-40 bg-white dark:bg-slate-900  overflow-auto"
           : "relative flex flex-col h-full"
       }`}
     >
       <div
         className={`${isFullScreen ? "min-h-screen" : "h-full"} flex flex-col`}
       >
-        <div className="w-full sm:w-auto flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100/50">
+        <div className="w-full sm:w-auto flex-shrink-0 bg-white/80 dark:bg-slate-900 backdrop-blur-sm rounded-xl shadow-sm dark:shadow-slate-800/50 ">
           <div className="p-3">
             {activeTrack && (
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -1471,17 +1472,17 @@ function SectionList({
                     </h2>
                     <div className="hidden sm:block w-2 h-2 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 animate-pulse" />
                   </div>
-                  <div className="flex w-full sm:w-auto sm:min-w-40 items-center justify-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
-                      <Clock className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm text-gray-600">
+                  <div className="flex w-full sm:w-auto sm:min-w-40 items-center justify-center gap-2 bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-lg">
+                      <Clock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
                         {new Date(activeTrack.startDate).toLocaleDateString()} -{" "}
                         {new Date(activeTrack.endDate).toLocaleDateString()}
                       </span>
                     </div>
                   <div className="flex w-full sm:w-auto flex-col sm:flex-row items-start md:items-center gap-3 md:gap-6">
-                    <div className="flex w-full sm:max-w-40 sm:flex-row items-center justify-center gap-2 bg-violet-50 px-3 py-1.5 rounded-lg">
-                      <Layers className="w-4 h-4 text-violet-500" />
-                      <span className="text-sm text-gray-600 whitespace-nowrap">
+                    <div className="flex w-full sm:max-w-40 sm:flex-row items-center justify-center gap-2 bg-violet-50 dark:bg-violet-900/10 px-3 py-1.5 rounded-lg">
+                      <Layers className="w-4 h-4  text-violet-600 dark:text-violet-400" />
+                      <span className="text-sm  text-violet-600 dark:text-violet-400 whitespace-nowrap ">
                         {activeTrack.sections.length} sections
                       </span>
                     </div>
@@ -1539,13 +1540,13 @@ function SectionList({
             </div>
             <div className="flex">
               <div className="flex-1 overflow-hidden">
-                <div className="bg-gradient-to-br from-slate-50/30 to-white rounded-lg shadow max-h-[86vh] flex flex-col">
-                  <div className="overflow-auto flex-1 min-h-[65vh] relative">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-sm z-20">
+                <div className="bg-gradient-to-br from-slate-50/30 to-white dark:from-slate-900/30 dark:to-slate-900/30 rounded-lg shadow max-h-[86vh] flex flex-col">
+                  <div className="overflow-auto flex-1 min-h-[65vh] relative dark:bg-slate-900/50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 dark:bg-slate-900/50">
+                      <thead className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-sm z-20 dark:bg-slate-900/50">
                         <tr>{tableHeaders}</tr>
                       </thead>
-                      <tbody>
+                      <tbody className="dark:bg-slate-900/50">
                         {displayedSections.map((group, groupIndex: number) =>
                           group.sections.map(
                             (section: Section, sectionIndex: number) => {
