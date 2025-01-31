@@ -129,12 +129,15 @@ export default function SectionCalendarFilter({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          flex w-full items-center justify-between px-4 py-2.5 
-          bg-white dark:bg-slate-800 rounded-lg shadow-sm border 
+          w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl 
+          shadow-sm border transition-all duration-200
           ${activeFilter 
-            ? 'border-blue-200 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20' 
-            : 'border-gray-200 dark:border-gray-700'} 
-          hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors duration-200
+            ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700' 
+            : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700'} 
+          hover:bg-gray-50 dark:hover:bg-slate-800 
+          hover:border-blue-300 dark:hover:border-blue-600
+          focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20
+          relative pr-8 group hover:shadow-md
         `}
       >
         <div className="flex items-center gap-1.5 sm:gap-2">

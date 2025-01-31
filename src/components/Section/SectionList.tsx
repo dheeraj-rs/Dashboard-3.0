@@ -1089,12 +1089,11 @@ function SectionList({
         .map((header) => (
           <th
             key={header.id}
-            className="px-4 py-2 border text-left text-sm font-semibold"
+            className="px-4 py-2 border text-left text-sm font-semibold "
             style={{
               background: tableStyles.headerColor,
               color: tableStyles.headerTextColor,
-              borderColor: tableStyles.borderColor,
-              borderStyle: tableStyles.headerBorderStyle,
+              border: `1px ${tableStyles.headerBorderStyle} ${tableStyles.borderColor}`,
             }}
           >
             {header.label}
@@ -1130,7 +1129,7 @@ function SectionList({
 
     return (
       <div className="w-full sm:w-auto flex-shrink-0 flex flex-col sm:flex-row items-center gap-2">
-        <span className="text-sm font-medium gap-1 bg-gradient-to-br from-white/90 to-gray-50/80 dark:from-slate-900/90 dark:to-slate-800/80 backdrop-blur-sm border border-gray-100/80 dark:border-gray-800/80 text-gray-600 dark:text-gray-300 rounded-xl p-1 shadow-sm transition-all duration-300 hover:shadow-md py-2.5 px-3 whitespace-nowrap">
+        <span className="text-sm font-medium gap-1 bg-gradient-to-br from-white/90  to-gray-50/80 dark:from-slate-900/90 dark:to-slate-800/80 backdrop-blur-sm border border-gray-100/80 dark:border-gray-800/80 text-gray-600 dark:text-gray-300 rounded-xl p-1 shadow-sm transition-all duration-300 hover:shadow-md py-2.5 px-3 whitespace-nowrap">
           {selection.selectedCells.length} cells selected (
           {Array.from(uniqueColumnTypes).join(", ")})
         </span>
@@ -1307,7 +1306,7 @@ function SectionList({
 
     if (!tracks?.length) {
       return (
-        <div className="w-full px-3 py-2.5 text-sm text-gray-500 bg-gray-50 rounded-xl border border-gray-200">
+        <div className="w-full px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-800">
           No tracks available
         </div>
       );
@@ -1318,13 +1317,13 @@ function SectionList({
         <button 
           onClick={() => setShowTrackDropdown(prev => !prev)}
           className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-sm 
-            bg-white rounded-xl border border-gray-200 
+            bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400
             focus:outline-none focus:ring-2 focus:ring-blue-500/30 
             hover:border-blue-400 active:border-blue-500
             transition-all duration-200 group-hover:shadow-md"
         >
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-gray-400" />
+            <Layers className="w-4 h-4 text-gray-400 dark:text-gray-400" />
             <span className="truncate">{activeTrack?.name || 'Select Track'}</span>
           </div>
           <ChevronDown 
@@ -1339,8 +1338,8 @@ function SectionList({
               className="fixed inset-0  z-[998]"
               onClick={() => setShowTrackDropdown(false)}
             />
-            <div className="absolute left-0 mt-2 w-full bg-white rounded-xl shadow-xl 
-              border border-gray-200 py-1 z-[999]">
+            <div className="absolute left-0 mt-2 w-full bg-white dark:bg-slate-900 rounded-xl  shadow-xl 
+              border border-gray-200 dark:border-gray-800 py-1 z-[999]">
               <div className="max-h-[300px] overflow-y-auto">
                 {tracks.map((track) => (
                   <button
@@ -1354,15 +1353,15 @@ function SectionList({
                       }
                     }}
                     className={`w-full px-4 py-2.5 text-left text-sm transition-colors duration-200 
-                      flex items-center gap-2 hover:bg-gray-50
-                      ${track.id === activeTrack?.id ? 'bg-blue-50/80 text-blue-600 font-medium' : 'text-gray-700'}`}
+                      flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-800
+                      ${track.id === activeTrack?.id ? 'bg-blue-50/80 text-blue-600 font-medium dark:text-blue-400 dark:hover:bg-blue-50/80' : 'text-gray-700 dark:text-gray-300 dark:hover:bg-slate-800'}`}
                   >
                     <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0
-                      ${track.id === activeTrack?.id ? 'bg-blue-500' : 'bg-gray-300'}`} 
+                      ${track.id === activeTrack?.id ? 'bg-blue-500 dark:bg-blue-400 dark:hover:bg-blue-600' : 'bg-gray-300 dark:bg-slate-800 dark:hover:bg-slate-700'}`} 
                     />
                     <span className="truncate">{track.name}</span>
                     {track.id === activeTrack?.id && (
-                      <Check className="w-4 h-4 ml-auto text-blue-500" />
+                      <Check className="w-4 h-4 ml-auto  text-blue-500 dark:text-blue-400" />
                     )}
                   </button>
                 ))}
@@ -1496,9 +1495,9 @@ function SectionList({
           </div>
         </div>
         <div className={`flex-1 py-4 sticky top-0 ${isFullScreen && "p-4"}`}>
-          <div className="rounded-xl border border-gray-200 bg-white h-full overflow-hidden shadow-sm">
-            <div className="border-b border-gray-100 bg-white/95 sticky top-0 z-50 backdrop-blur-md">
-              <div className="p-3 bg-gradient-to-r from-slate-50/90 to-white/80">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 h-full overflow-hidden shadow-sm">
+            <div className="border-b border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-slate-900/95 sticky top-0 z-50 backdrop-blur-md">
+              <div className="p-3 bg-gradient-to-r from-slate-50/90 to-white/80 dark:from-slate-900/90 dark:to-slate-900/80">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
 
                   {/* Track Dropdown */}
@@ -1522,7 +1521,14 @@ function SectionList({
                         placeholder="Search sections..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 text-sm bg-white/50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 placeholder-gray-400 transition-all duration-200 group-hover:shadow-md backdrop-blur-sm z"
+                        className="w-full pl-10 pr-10 py-2.5 text-sm 
+                      bg-blue-100 dark:bg-blue-900/30
+                      rounded-xl border border-gray-200 dark:border-slate-700
+                      focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 
+                      focus:border-blue-500/30 dark:focus:border-blue-400/30
+                      placeholder-gray-400 dark:placeholder-gray-500
+                      text-gray-900 dark:text-gray-100
+                      transition-all duration-200 group-hover:shadow-md"
                       />
                       <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-200 group-hover:text-blue-500" />
                       {searchQuery && (
@@ -1543,10 +1549,10 @@ function SectionList({
                 <div className="bg-gradient-to-br from-slate-50/30 to-white dark:from-slate-900/30 dark:to-slate-900/30 rounded-lg shadow max-h-[86vh] flex flex-col">
                   <div className="overflow-auto flex-1 min-h-[65vh] relative dark:bg-slate-900/50">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 dark:bg-slate-900/50">
-                      <thead className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-sm z-20 dark:bg-slate-900/50">
+                      <thead className="sticky top-0  bg-white/95 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm z-20">
                         <tr>{tableHeaders}</tr>
                       </thead>
-                      <tbody className="dark:bg-slate-900/50">
+                      <tbody >
                         {displayedSections.map((group, groupIndex: number) =>
                           group.sections.map(
                             (section: Section, sectionIndex: number) => {
